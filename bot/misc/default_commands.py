@@ -16,31 +16,15 @@ async def set_default_commands(bot: Bot):
         "history": "Історія чату",
     }
 
-    command_defaults = {"help": "Допоможіть мені"}
-
     commands_admins = {
-        "ro": "Замутити користувача",
-        "unro": "Розмутити користувача",
-        "ban": "Забанити користувача",
-        "unban": "Розбанити користувача",
-        "media_false": "Забороняє використання медіа",
-        "media_true": "Дозволяє використання медіа",
-        "promote": "Підвищити користувача",
-        "demote": "Понизити користувача",
         "provider": "Змінити AI провайдера",
         "cunning": "Увімкнути хитрого ШІ",
         "good": "Увімкнути доброго ШІ",
         "nasty": "Увімкнути поганого ШІ",
+        "topup": "Дати 100 рейтингу (only owner)",
         **commands_members,
     }
 
-    await bot.set_my_commands(
-        [
-            BotCommand(command=name, description=value)
-            for name, value in command_defaults.items()
-        ],
-        scope=types.BotCommandScopeDefault(),
-    )
     await bot.set_my_commands(
         [
             BotCommand(command=name, description=value)
