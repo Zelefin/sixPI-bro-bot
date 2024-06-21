@@ -24,12 +24,32 @@ class OpenAI(BaseSettings):
     assistance_id: str
 
 
+class ElevenLabs(BaseSettings):
+    api_key: str
+
+
+class Anthropic(BaseSettings):
+    api_key: str
+
+
+class Redis(BaseSettings):
+    host: str
+    port: int
+    db: int
+
+    def make_connection_string(self) -> str:
+        return f"redis://{self.host}:{self.port}/{self.db}"
+
+
 class Config(BaseSettings):
     bot: Bot
     admin: Admin
     telegram_api: TelegramApi
     chat: Chat
     openai: OpenAI
+    elevenlabs: ElevenLabs
+    anthropic: Anthropic
+    redis: Redis
 
     class Config:
         env_file = ".env"

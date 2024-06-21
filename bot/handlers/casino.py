@@ -9,7 +9,7 @@ from infrastructure.database.repo.requests import RequestsRepo
 from bot.filters.rating import RatingFilter
 from bot.services.broadcaster import send_message, send_telegram_action
 
-groups_casino_router = Router()
+casino_router = Router()
 
 HOURS = 60 * 60
 MAX_CASINO_BET = 7
@@ -79,10 +79,10 @@ async def process_dice_roll(
 
 
 # Command handler for rolling the dice
-@groups_casino_router.message(
+@casino_router.message(
     Command("casino", magic=F.args.regexp(r"(\d+)")), RatingFilter(rating=50)
 )
-@groups_casino_router.message(Command("casino", magic=~F.args), RatingFilter(rating=50))
+@casino_router.message(Command("casino", magic=~F.args), RatingFilter(rating=50))
 @flags.rate_limit(limit=1 * HOURS, key="casino", max_times=3)
 async def roll_dice_command(
     message: types.Message,

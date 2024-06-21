@@ -1,13 +1,13 @@
 import logging
 
 from aiogram import Bot, F, Router, flags, types
-from aiogram.enums import ChatType
 from aiogram.filters import Command, or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import StorageKey
 from aiogram.exceptions import TelegramBadRequest
 from cachetools import TTLCache
 
+from bot.filters.local_chat import ChatFilter
 from infrastructure.database.repo.requests import RequestsRepo
 from bot.filters.rating import RatingFilter
 from bot.handlers.casino import HOURS
@@ -20,9 +20,9 @@ from bot.services.rating import (
 )
 from bot.services.cache_profiles import get_profile_cached
 
-groups_rating_router = Router()
-groups_rating_router.message.filter(F.chat.type == ChatType.SUPERGROUP)
-groups_rating_router.message_reaction.middleware(RatingCacheReactionMiddleware())
+rating_router = Router()
+rating_router.message.filter(ChatFilter())
+rating_router.message_reaction.middleware(RatingCacheReactionMiddleware())
 
 cache = TTLCache(maxsize=10, ttl=60 * 60 * 24 * 7)
 
@@ -63,8 +63,8 @@ async def process_new_rating(
                 return new_rating, "🐥 Козак"
 
 
-# @flags.override(user_id=362089194)
-@groups_rating_router.message(Command("top"))
+# @flags.override(user_id=845597372)
+@rating_router.message(Command("top"))
 @flags.rate_limit(limit=0.5 * HOURS, key="top", chat=True)
 async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
     history_key = StorageKey(bot_id=bot.id, user_id=m.chat.id, chat_id=m.chat.id)
@@ -131,7 +131,6 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
         ]
     )
 
-    # - <b>👑Королі</b>
     text += """
 <b>Права хелперів:</b>
 - <b>👑Королі</b> можуть встановлювати титул собі і всім нижче чаклунів.
@@ -156,21 +155,19 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
     await m.answer(text, disable_notification=True)
 
 
-@groups_rating_router.message_reaction(
+@rating_router.message_reaction(
     or_f(
         F.new_reaction[0].emoji.in_(POSITIVE_EMOJIS),
         F.old_reaction[0].emoji.in_(POSITIVE_EMOJIS),
     ),
 )
-@groups_rating_router.message_reaction(
+@rating_router.message_reaction(
     or_f(
         F.new_reaction[0].emoji.in_(NEGATIVE_EMOJIS),
         F.old_reaction[0].emoji.in_(NEGATIVE_EMOJIS),
     ),
     RatingFilter(rating=50),
 )
-@flags.override(user_id=362089194)
-@flags.rate_limit(limit=180, key="rating", max_times=5)
 async def add_reaction_rating_handler(
     reaction: types.MessageReactionUpdated,
     repo: RequestsRepo,
@@ -206,9 +203,9 @@ async def add_reaction_rating_handler(
         )
 
 
-@groups_rating_router.message(
+@rating_router.message(
     Command("topup"),
-    F.from_user.id == 362089194,
+    F.from_user.id == 845597372,
     F.reply_to_message.from_user.id.as_("target_id"),
 )
 async def topup_user(message: types.Message, target_id: int, repo: RequestsRepo):
@@ -216,7 +213,7 @@ async def topup_user(message: types.Message, target_id: int, repo: RequestsRepo)
     await message.answer("Рейтинг поповнено на 100")
 
 
-@groups_rating_router.message(Command("rating"))
+@rating_router.message(Command("rating"))
 async def get_user_rating(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
     target = m.reply_to_message.from_user if m.reply_to_message else m.from_user
     target_id = target.id
@@ -250,7 +247,7 @@ async def get_user_rating(m: types.Message, repo: RequestsRepo, bot, state: FSMC
     )
 
 
-@groups_rating_router.message(Command("wipe"), F.admin)
+@rating_router.message(Command("wipe"), F.admin)
 async def wipe_user_rating(m: types.Message, repo: RequestsRepo):
     await repo.rating_users.wipe_ratings()
     await m.reply("Рейтинги користувачів було очищено.")

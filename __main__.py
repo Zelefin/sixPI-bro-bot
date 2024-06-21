@@ -16,16 +16,13 @@ from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
 from bot.handlers.fun import fun_router
-from bot.handlers.ai import (
-    ai_router,
-    group_router,
-    groups_rating_router,
-    payment_router,
-)
+from bot.handlers.ai import ai_router
+from bot.handlers.title import title_router
+from bot.handlers.casino import casino_router
+from bot.handlers.rating import rating_router
 
 from bot.middlewares.bot_messages import BotMessages
 from bot.middlewares.database import DatabaseMiddleware
-# from tgbot.middlewares.policy_content import OpenAIModerationMiddleware
 from bot.middlewares.ratings_cache import MessageUserMiddleware
 from bot.middlewares.throttling import ThrottlingMiddleware
 from bot.misc.default_commands import set_default_commands
@@ -45,9 +42,7 @@ async def shutdown(client: Client) -> None:
 
 def register_global_middlewares(
     dp: Dispatcher,
-    config: Config,
     session_pool,
-    openai_client,
     storage,
 ):
     """
@@ -56,17 +51,17 @@ def register_global_middlewares(
 
     :param dp: The dispatcher instance.
     :type dp: Dispatcher
-    :param config: The configuration object from the loaded configuration.
     :param session_pool: Optional session pool object for the database using SQLAlchemy.
+    :param storage: FSM storage object.
     :return: None
     """
-    middleware_types = [
-        OpenAIModerationMiddleware(openai_client),
-    ]
-
-    for middleware_type in middleware_types:
-        dp.message.outer_middleware(middleware_type)
-        dp.callback_query.outer_middleware(middleware_type)
+    # middleware_types = [
+    #     OpenAIModerationMiddleware(openai_client),
+    # ]
+    #
+    # for middleware_type in middleware_types:
+    #     dp.message.outer_middleware(middleware_type)
+    #     dp.callback_query.outer_middleware(middleware_type)
     dp.message.middleware(ThrottlingMiddleware(storage))
     dp.message_reaction.middleware(ThrottlingMiddleware(storage))
     dp.update.outer_middleware(DatabaseMiddleware(session_pool))
@@ -110,9 +105,9 @@ def get_storage(config):
         Storage: The storage object based on the configuration.
 
     """
-    if config.tg_bot.use_redis:
+    if True:
         return RedisStorage.from_url(
-            config.redis.dsn(),
+            config.redis.make_connection_string(),
             key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
         )
     else:
@@ -153,14 +148,14 @@ async def main():
     )
 
     dp.include_routers(
-        payment_router,
-        groups_rating_router,
-        group_router,
+        rating_router,
+        casino_router,
+        title_router,
         fun_router,
         ai_router,
     )
 
-    register_global_middlewares(dp, config, session_pool, openai_client, storage)
+    register_global_middlewares(dp, session_pool, storage)
 
     dp.workflow_data.update(
         ratings_cache=ratings_cache,

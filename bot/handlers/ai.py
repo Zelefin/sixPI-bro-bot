@@ -14,7 +14,7 @@ from elevenlabs.client import AsyncElevenLabs
 from pyrogram import Client, errors
 from pyrogram.types import Message as PyrogramMessage
 
-from bot.filters.permissions import HasPermissionsFilter
+from bot.filters.local_chat import ChatFilter
 from bot.filters.rating import RatingFilter
 from bot.misc.ai_prompts import (
     GOOD_MODE,
@@ -27,10 +27,10 @@ from bot.services.ai_service.anthropic_provider import (
     AnthropicProvider,
 )
 from bot.services.ai_service.openai_provider import OpenAIProvider
-from bot.services.token_usage import Opus, Sonnet
+from bot.services.token_usage import Sonnet
 
 ai_router = Router()
-ai_router.message.filter(F.chat.id.in_({-1001415356906, 362089194}))
+ai_router.message.filter(ChatFilter())
 
 
 ASSISTANT_ID = 827638584
@@ -234,7 +234,7 @@ async def get_notification(usage_cost: float) -> str:
 
 @ai_router.message(Command("history"), RatingFilter(rating=600))
 @flags.rate_limit(limit=600, key="history", max_times=1, chat=True)
-@flags.override(user_id=362089194)
+@flags.override(user_id=845597372)
 async def summarize_chat_history(
     message: types.Message,
     client: Client,
@@ -318,45 +318,26 @@ Make sure to close all the 'a' tags properly.
 
 @ai_router.message(
     Command("ai", magic=F.args.as_("prompt")),
-    or_f(
-        HasPermissionsFilter(can_delete_messages=True),
-        RatingFilter(rating=50),
-    ),
+    RatingFilter(rating=50),
 )
 @ai_router.message(
     Command("ai", magic=F.args.as_("prompt")),
     F.photo[-1].as_("photo"),
-    or_f(
-        HasPermissionsFilter(can_delete_messages=True),
-        RatingFilter(rating=50),
-    ),
+    RatingFilter(rating=50),
 )
 @ai_router.message(
     F.reply_to_message.from_user.id == ASSISTANT_ID,
     F.reply_to_message.text.as_("assistant_message"),
     or_f(F.text.as_("prompt"), F.caption.as_("prompt")),
-    or_f(
-        HasPermissionsFilter(can_delete_messages=True),
-        RatingFilter(rating=50),
-    ),
+    RatingFilter(rating=50),
 )
 @ai_router.message(
     Command("ai", magic=F.args.regexp(MULTIPLE_MESSAGES_REGEX)),
-    F.reply_to_message,
-    or_f(
-        HasPermissionsFilter(can_delete_messages=True),
-        RatingFilter(rating=50),
-    ),
+    F.reply_to_message, RatingFilter(rating=50)
 )
-@ai_router.message(
-    Command("ai"),
-    or_f(
-        HasPermissionsFilter(can_delete_messages=True),
-        RatingFilter(rating=50),
-    ),
-)
+@ai_router.message(Command("ai"), RatingFilter(rating=50))
 @flags.rate_limit(limit=300, key="ai", max_times=5)
-@flags.override(user_id=362089194)
+@flags.override(user_id=845597372)
 async def ask_ai(
     message: types.Message,
     anthropic_client: AsyncAnthropic,
@@ -501,17 +482,12 @@ async def ask_ai(
     )
 
     try:
-        if usage_cost > 2:
-            keyboard = await payment_keyboard(bot, usage_cost, message.chat.id)
-        else:
-            keyboard = None
 
         response = await ai_conversation.answer_with_ai(
             message=message,
             sent_message=sent_message,
             notification="",
             with_tts=ai_mode == "NASTY",
-            keyboard=keyboard,
         )
         if not response:
             return
