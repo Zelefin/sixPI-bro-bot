@@ -15,7 +15,6 @@ from elevenlabs.client import AsyncElevenLabs
 from pyrogram import Client, errors
 from pyrogram.types import Message as PyrogramMessage
 
-from bot.filters.local_chat import ChatFilter
 from bot.filters.rating import RatingFilter
 from bot.misc.ai_prompts import (
     GOOD_MODE,
@@ -31,7 +30,6 @@ from bot.services.ai_service.openai_provider import OpenAIProvider
 from bot.services.token_usage import Sonnet
 
 ai_router = Router()
-ai_router.message.filter(ChatFilter())
 
 
 ASSISTANT_ID = 6065588364
@@ -614,8 +612,8 @@ async def set_ai_provider(
     await message.answer(f"Провайдер змінено на {provider}")
 
 
-@ai_router.message(F.text, ChatFilter())
-@ai_router.message(F.caption, ChatFilter())
+@ai_router.message(F.text)
+@ai_router.message(F.caption)
 @flags.rate_limit(limit=100, key="ai-history", max_times=1, silent=True)
 async def history_worker(
     message: types.Message,

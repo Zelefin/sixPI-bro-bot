@@ -3,8 +3,7 @@ from elevenlabs.client import AsyncElevenLabs
 import logging
 
 import betterlogging as bl
-from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram import Bot, Dispatcher, F
 from aiogram.fsm.strategy import FSMStrategy
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from anthropic import AsyncAnthropic
@@ -94,31 +93,14 @@ def setup_logging():
     logger.info("Starting bot")
 
 
-def get_storage(config):
-    """
-    Return storage based on the provided configuration.
-
-    Args:
-        config (Config): The configuration object.
-
-    Returns:
-        Storage: The storage object based on the configuration.
-
-    """
-    if True:
-        return RedisStorage.from_url(
-            config.redis.make_connection_string(),
-            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
-        )
-    else:
-        return MemoryStorage()
-
-
 async def main():
     setup_logging()
 
     config = load_config(".env")
-    storage = get_storage(config)
+    storage = RedisStorage.from_url(
+            config.redis.make_connection_string(),
+            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
+        )
 
     bot = Bot(
         token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML")
@@ -163,6 +145,9 @@ async def main():
         openai_client=openai_client,
         elevenlabs_client=elevenlabs_client,
     )
+
+    dp.message.filter(F.chat.id.in_({config.chat.prod, config.chat.debug}))
+
     bot.session.middleware(BotMessages(session_pool))
     await bot.delete_webhook()
     dp.startup.register(on_startup)

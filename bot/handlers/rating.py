@@ -7,7 +7,7 @@ from aiogram.fsm.storage.base import StorageKey
 from aiogram.exceptions import TelegramBadRequest
 from cachetools import TTLCache
 
-from bot.filters.local_chat import ChatFilter
+from bot.filters.admin import AdminFilter
 from infrastructure.database.repo.requests import RequestsRepo
 from bot.filters.rating import RatingFilter
 from bot.handlers.casino import HOURS
@@ -21,7 +21,6 @@ from bot.services.rating import (
 from bot.services.cache_profiles import get_profile_cached
 
 rating_router = Router()
-rating_router.message.filter(ChatFilter())
 rating_router.message_reaction.middleware(RatingCacheReactionMiddleware())
 
 cache = TTLCache(maxsize=10, ttl=60 * 60 * 24 * 7)
@@ -203,7 +202,7 @@ async def add_reaction_rating_handler(
 
 @rating_router.message(
     Command("topup"),
-    F.from_user.id == 845597372,
+    AdminFilter(),
     F.reply_to_message.from_user.id.as_("target_id"),
 )
 async def topup_user(message: types.Message, target_id: int, repo: RequestsRepo):
