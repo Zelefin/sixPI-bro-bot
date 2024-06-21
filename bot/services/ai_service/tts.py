@@ -10,7 +10,7 @@ from pydub import AudioSegment
 
 
 async def generate_speech(client: AsyncElevenLabs, text: str) -> AsyncIterator[bytes]:
-    voice_id = "4nUxjX5jMlD8n4tsc9wu"
+    voice_id = "NJGiMgVHtXSA1XYSuNKl"
 
     return await client.generate(
         text=text,
