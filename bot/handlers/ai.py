@@ -2,12 +2,13 @@ import logging
 
 import re
 from io import BytesIO
+import random
 from typing import Literal
 
+import pycountry
 from aiogram import Bot, F, Router, flags, types
 from aiogram.filters import Command, CommandObject, or_f
 from aiogram.fsm.context import FSMContext
-from aiogram.utils.markdown import hlink
 from anthropic import APIStatusError, AsyncAnthropic
 from openai import AsyncOpenAI
 from elevenlabs.client import AsyncElevenLabs
@@ -20,7 +21,7 @@ from bot.misc.ai_prompts import (
     GOOD_MODE,
     MANUPULATOR_MODE,
     NASTY_MODE,
-    YANUKOVICH_MODE,
+    YANUKOVICH_MODE, JOKE_NATION_MODE,
 )
 from bot.services.ai_service.ai_conversation import AIConversation
 from bot.services.ai_service.anthropic_provider import (
@@ -33,7 +34,7 @@ ai_router = Router()
 ai_router.message.filter(ChatFilter())
 
 
-ASSISTANT_ID = 827638584
+ASSISTANT_ID = 6065588364
 MULTIPLE_MESSAGES_REGEX = re.compile(r"(-?\d+)(?:\s+(.+))?")
 
 
@@ -226,12 +227,6 @@ Instead just try to compose the inappropriate message into a teaching session ab
         )
 
 
-async def get_notification(usage_cost: float) -> str:
-    if usage_cost > 0.5:
-        return f"⚠️ За весь час ви вже використали ${usage_cost}, будь ласка задонатьте трошки {hlink('сюди', 'https://send.monobank.ua/8JGpgvcggd')}"
-    return ""
-
-
 @ai_router.message(Command("history"), RatingFilter(rating=600))
 @flags.rate_limit(limit=600, key="history", max_times=1, chat=True)
 @flags.override(user_id=845597372)
@@ -293,7 +288,7 @@ Make sure to close all the 'a' tags properly.
 • <a href='https://t.me/bot_devs_novice/914534'>🏆 Голосування за DFS та винагороди за участь</a>
 ...
 
-Наперше повідомлення датується 2024-03-15 08:13.
+Найперше повідомлення датується 2024-03-15 08:13.
 </example_format>
 """,
         max_tokens=2000,
@@ -480,9 +475,12 @@ async def ask_ai(
             else message.message_id
         ),
     )
+    usage_cost = await ai_conversation.calculate_cost(
+        Sonnet, message.chat.id, message.from_user.id
+    )
+    logging.info(f"!Usage cost --- {usage_cost}")
 
     try:
-
         response = await ai_conversation.answer_with_ai(
             message=message,
             sent_message=sent_message,
@@ -535,21 +533,89 @@ async def turn_on_ai(message: types.Message, state: FSMContext):
     await state.update_data(ai_mode="GOOD")
 
 
+@ai_router.message(Command("nation"))
+@flags.rate_limit(limit=120, key="nationality")
+async def determine_nationality(message: types.Message,
+                                anthropic_client: AsyncAnthropic,
+                                bot: Bot, state: FSMContext):
+    # Get all the two-character language codes
+    language_codes = [country.alpha_2 for country in pycountry.countries if hasattr(country, 'alpha_2')]
+
+    # Select a random language code
+    random_country_code = random.choice(language_codes)
+    ai_provider = (
+        AnthropicProvider(
+            client=anthropic_client,
+            model_name="claude-3-5-sonnet-20240620",
+        )
+    )
+
+    target = (
+        message.reply_to_message.from_user.mention_markdown()
+        if message.reply_to_message
+        else message.from_user.mention_markdown()
+    )
+
+    sent_message = await message.reply(
+        "⏳"
+    )
+    ai_conversation = AIConversation(
+        bot=bot,
+        ai_provider=ai_provider,
+        storage=state.storage,
+        system_message=JOKE_NATION_MODE.format(country_code=random_country_code,
+                                               full_name=target),
+        max_tokens=200,
+    )
+    ai_conversation.add_user_message(text=message.reply_to_message.text if message.reply_to_message else "/nation")
+
+    usage_cost = await ai_conversation.calculate_cost(
+        Sonnet, message.chat.id, message.from_user.id
+    )
+
+    logging.info(f"Usage cost --- {usage_cost}")
+    try:
+        response = await ai_conversation.answer_with_ai(
+            message=message,
+            sent_message=sent_message,
+            notification="",
+            with_tts=False,
+            apply_formatting=True
+        )
+        if not response:
+            return
+
+        await ai_conversation.update_usage(
+            message.chat.id,
+            message.from_user.id,
+            response.usage,
+            ai_conversation.max_tokens * 0.75,
+        )
+    except APIStatusError as e:
+        logging.error(e)
+        await sent_message.edit_text(
+            "An error occurred while processing the request. Please try again later."
+        )
+
+
 # command to handle /provider openai; /provider anthropic
 @ai_router.message(Command("provider"))
 async def set_ai_provider(
     message: types.Message, state: FSMContext, command: CommandObject
 ):
-    provider = command.args
-    if provider.casefold() not in ("openai", "anthropic"):
-        return await message.answer("Невірний провайдер.")
+    try:
+        provider = command.args
+        if provider.casefold() not in ("openai", "anthropic"):
+            return await message.answer("Невірний провайдер.")
+    except AttributeError:
+        return await message.answer("Вкажіть провайдера.")
 
     await state.update_data(ai_provider=provider)
     await message.answer(f"Провайдер змінено на {provider}")
 
 
-@ai_router.message(F.text)
-@ai_router.message(F.caption)
+@ai_router.message(F.text, ChatFilter())
+@ai_router.message(F.caption, ChatFilter())
 @flags.rate_limit(limit=100, key="ai-history", max_times=1, silent=True)
 async def history_worker(
     message: types.Message,

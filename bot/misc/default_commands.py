@@ -12,8 +12,6 @@ async def set_default_commands(bot: Bot):
         "casino": "Зіграти в казино",
         "ai": "ШІ відповідь",
         "title": "Встановити титул",
-        "help": "Інформація про бота",
-        "history": "Історія чату",
     }
 
     commands_admins = {
