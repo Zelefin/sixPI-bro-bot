@@ -15,6 +15,7 @@ from elevenlabs.client import AsyncElevenLabs
 from pyrogram import Client, errors
 from pyrogram.types import Message as PyrogramMessage
 
+from bot.config_reader import load_config
 from bot.filters.rating import RatingFilter
 from bot.misc.ai_prompts import (
     GOOD_MODE,
@@ -32,8 +33,8 @@ from bot.services.token_usage import Sonnet
 
 ai_router = Router()
 
-
-ASSISTANT_ID = 6065588364
+config = load_config()
+ASSISTANT_ID = config.bot.token.split(":")[0]
 MULTIPLE_MESSAGES_REGEX = re.compile(r"(-?\d+)(?:\s+(.+))?")
 
 
