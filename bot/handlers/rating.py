@@ -234,9 +234,7 @@ async def get_user_rating(m: types.Message, repo: RequestsRepo, bot, state: FSMC
     change_text = (
         f" (⬆️ {rating_change})"
         if rating_change > 0
-        else f" (🔻 {abs(rating_change)})"
-        if rating_change != 0
-        else ""
+        else f" (🔻 {abs(rating_change)})" if rating_change != 0 else ""
     )
 
     await m.reply(

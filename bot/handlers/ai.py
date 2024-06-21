@@ -20,7 +20,8 @@ from bot.misc.ai_prompts import (
     GOOD_MODE,
     MANUPULATOR_MODE,
     NASTY_MODE,
-    YANUKOVICH_MODE, JOKE_NATION_MODE,
+    YANUKOVICH_MODE,
+    JOKE_NATION_MODE,
 )
 from bot.services.ai_service.ai_conversation import AIConversation
 from bot.services.ai_service.anthropic_provider import (
@@ -326,7 +327,8 @@ Make sure to close all the 'a' tags properly.
 )
 @ai_router.message(
     Command("ai", magic=F.args.regexp(MULTIPLE_MESSAGES_REGEX)),
-    F.reply_to_message, RatingFilter(rating=50)
+    F.reply_to_message,
+    RatingFilter(rating=50),
 )
 @ai_router.message(Command("ai"), RatingFilter(rating=50))
 @flags.rate_limit(limit=300, key="ai", max_times=5)
@@ -353,9 +355,11 @@ async def ask_ai(
     ai_provider = (
         AnthropicProvider(
             client=anthropic_client,
-            model_name="claude-3-haiku-20240307"
-            if rating < 300
-            else "claude-3-5-sonnet-20240620",
+            model_name=(
+                "claude-3-haiku-20240307"
+                if rating < 300
+                else "claude-3-5-sonnet-20240620"
+            ),
         )
         if provider == "anthropic"
         else OpenAIProvider(
@@ -533,19 +537,24 @@ async def turn_on_ai(message: types.Message, state: FSMContext):
 
 @ai_router.message(Command("nation"))
 @flags.rate_limit(limit=120, key="nationality")
-async def determine_nationality(message: types.Message,
-                                anthropic_client: AsyncAnthropic,
-                                bot: Bot, state: FSMContext):
+async def determine_nationality(
+    message: types.Message,
+    anthropic_client: AsyncAnthropic,
+    bot: Bot,
+    state: FSMContext,
+):
     # Get all the two-character language codes
-    language_codes = [country.alpha_2 for country in pycountry.countries if hasattr(country, 'alpha_2')]
+    language_codes = [
+        country.alpha_2
+        for country in pycountry.countries
+        if hasattr(country, "alpha_2")
+    ]
 
     # Select a random language code
     random_country_code = random.choice(language_codes)
-    ai_provider = (
-        AnthropicProvider(
-            client=anthropic_client,
-            model_name="claude-3-5-sonnet-20240620",
-        )
+    ai_provider = AnthropicProvider(
+        client=anthropic_client,
+        model_name="claude-3-5-sonnet-20240620",
     )
 
     target = (
@@ -554,18 +563,17 @@ async def determine_nationality(message: types.Message,
         else message.from_user.mention_markdown()
     )
 
-    sent_message = await message.reply(
-        "⏳"
-    )
+    sent_message = await message.reply("⏳")
     ai_conversation = AIConversation(
         bot=bot,
         ai_provider=ai_provider,
         storage=state.storage,
-        system_message=JOKE_NATION_MODE.format(country_code=random_country_code,
-                                               full_name=target),
+        system_message=JOKE_NATION_MODE.format(
+            country_code=random_country_code, full_name=target
+        ),
         max_tokens=200,
     )
-    ai_conversation.add_user_message(text=message.reply_to_message.text if message.reply_to_message else "/nation")
+    ai_conversation.add_user_message(text="/nation")
 
     usage_cost = await ai_conversation.calculate_cost(
         Sonnet, message.chat.id, message.from_user.id
@@ -578,7 +586,7 @@ async def determine_nationality(message: types.Message,
             sent_message=sent_message,
             notification="",
             with_tts=False,
-            apply_formatting=True
+            apply_formatting=True,
         )
         if not response:
             return

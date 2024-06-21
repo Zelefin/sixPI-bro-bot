@@ -98,13 +98,11 @@ async def main():
 
     config = load_config(".env")
     storage = RedisStorage.from_url(
-            config.redis.make_connection_string(),
-            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
-        )
-
-    bot = Bot(
-        token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML")
+        config.redis.make_connection_string(),
+        key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
     )
+
+    bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
     engine = create_engine("main.db")
     db = Database(engine)
     client = Client(

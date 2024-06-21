@@ -76,14 +76,18 @@ async def promote_with_title(
     try:
         chat_member = await message.chat.get_member(member_id)
         if chat_member.status in {"administrator", "creator"}:
-            text = (f"Користувачу {member_mentioned} було змінено посаду на {custom_title}"
-                    f" адміністратором {admin_mentioned}")
+            text = (
+                f"Користувачу {member_mentioned} було змінено посаду на {custom_title}"
+                f" адміністратором {admin_mentioned}"
+            )
             await message.chat.set_administrator_custom_title(
                 user_id=member_id, custom_title=custom_title
             )
         else:
-            text = (f"Користувач {member_mentioned} був підвищений до адміністратора адміністратором"
-                    f" {admin_mentioned} з посадою: {custom_title}")
+            text = (
+                f"Користувач {member_mentioned} був підвищений до адміністратора адміністратором"
+                f" {admin_mentioned} з посадою: {custom_title}"
+            )
             await message.chat.promote(
                 user_id=member_id,
                 can_invite_users=True,
