@@ -227,88 +227,88 @@ Instead just try to compose the inappropriate message into a teaching session ab
         )
 
 
-@ai_router.message(Command("history"), RatingFilter(rating=600))
-@flags.rate_limit(limit=600, key="history", max_times=1, chat=True)
-@flags.override(user_id=845597372)
-async def summarize_chat_history(
-    message: types.Message,
-    client: Client,
-    state: FSMContext,
-    bot: Bot,
-    anthropic_client: AsyncAnthropic,
-    with_reply: bool = False,
-    with_bot: bool = True,
-):
-    sent_message = await message.answer(
-        "⏳", reply_to_message_id=message.message_id if with_reply else None
-    )
-    messages_history = await get_messages_history(
-        client, message.message_id, message.chat.id, -200, 200_000, with_bot=with_bot
-    )
-    if not messages_history:
-        return await message.answer("Не знайдено повідомлень для аналізу.")
-
-    ai_conversation = AIConversation(
-        bot=bot,
-        storage=state.storage,
-        ai_provider=AnthropicProvider(
-            client=anthropic_client,
-            model_name="claude-3-haiku-20240307",
-        ),
-        system_message="""You're a professional summarizer of conversation. You take all messages at determine the most important topics in the conversation.
-List all discussed topics in the history as a list of bullet points.
-Use Ukrainian language. Tell the datetime period of the earliest message (e.g. 2022-03-07 12:00).
-Format each bullet point as follows:
-• <a href='{earliest message url}}'>{TOPIC}</a>
-The url should be as it is, and point to the earliest message of the sumarized topic.
-Make sure to close all the 'a' tags properly.
-<important_rules>
-- DO NOT WRITE MESSAGES VERBATIM, JUST SUMMARIZE THEM.
-- List not more than 30 topics.
-- The topic descriptions should be distinct and descriptive.
-- The topic should contain at least 3 messages and be not verbatim text of the message.
-- Write every topic with an emoji that describes the topic.
-</important_rule>
-<example_input>
-<time>2024-03-15 10:05</time><user>AlexSmith</user>:<message>Hey, does anyone know how we can request the history of this chat? I need it for our monthly review.</message><message_url>https://t.me/bot_devs_novice/914528</message_url>
-<time>2024-03-15 10:06</time><user>MariaJones</user>:<message>@AlexSmith, I think you can use the chat history request feature in the settings. Just found a link about it.</message><message_url>https://t.me/bot_devs_novice/914529</message_url>
-<time>2024-03-15 10:08</time><user>JohnDoe</user>:<message>Correct, @MariaJones. Also, ensure that you have the admin rights to do so. Sometimes permissions can be tricky.</message><message_url>https://t.me/bot_devs_novice/914530</message_url>
-<time>2024-03-15 11:00</time><user>EmilyClark</user>:<message>Has anyone noticed a drop in subscribers after enabling the new feature on the OpenAI chatbot?</message><message_url>https://t.me/bot_devs_novice/914531</message_url>
-<time>2024-03-15 11:02</time><user>LucasBrown</user>:<message>Yes, @EmilyClark, we experienced the same issue. It seems like the auto-reply feature might be a bit too aggressive.</message><message_url>https://t.me/bot_devs_novice/914532</message_url>
-<time>2024-03-15 11:05</time><user>SarahMiller</user>:<message>I found a workaround for it. Adjusting the sensitivity settings helped us retain our subscribers. Maybe give that a try?</message><message_url>https://t.me/bot_devs_novice/914533</message_url>
-<time>2024-03-15 12:00</time><user>KevinWhite</user>:<message>Hey all, don't forget to vote for the DFS feature! There are rewards for participation.</message><message_url>https://t.me/bot_devs_novice/914534</message_url>
-<time>2024-03-15 12:02</time><user>RachelGreen</user>:<message>@KevinWhite, just voted! Excited about the rewards. Does anyone know when they will be distributed?</message><message_url>https://t.me/bot_devs_novice/914535</message_url>
-<time>2024-03-15 12:04</time><user>LeoThompson</user>:<message>Usually, rewards get distributed a week after the voting ends. Can't wait to see the new features in action!</message><message_url>https://t.me/bot_devs_novice/914536</message_url>
-</example_input>
-<example_format>
-Нижче наведено вичерпний перелік обговорюваних у цьому чаті тем:
-
-• <a href='https://t.me/bot_devs_novice/914528'>📔 Запит на історію чату</a>
-• <a href='https://t.me/bot_devs_novice/914531'>😢 Втрата підписників чат-ботом OpenAI через певну функцію</a>
-• <a href='https://t.me/bot_devs_novice/914534'>🏆 Голосування за DFS та винагороди за участь</a>
-...
-
-Найперше повідомлення датується 2024-03-15 08:13.
-</example_format>
-""",
-        max_tokens=2000,
-    )
-    history = f"<messages_history>{messages_history}</messages_history>"
-    ai_conversation.add_user_message(text=f"Summarize the chat history\n{history}")
-
-    try:
-        await ai_conversation.answer_with_ai(
-            message,
-            sent_message,
-            notification="#history",
-            apply_formatting=False,
-        )
-
-    except APIStatusError as e:
-        logging.error(e)
-        await sent_message.edit_text(
-            "An error occurred while processing the request. Please try again later."
-        )
+# @ai_router.message(Command("history"), RatingFilter(rating=600))
+# @flags.rate_limit(limit=600, key="history", max_times=1, chat=True)
+# @flags.override(user_id=845597372)
+# async def summarize_chat_history(
+#     message: types.Message,
+#     client: Client,
+#     state: FSMContext,
+#     bot: Bot,
+#     anthropic_client: AsyncAnthropic,
+#     with_reply: bool = False,
+#     with_bot: bool = True,
+# ):
+#     sent_message = await message.answer(
+#         "⏳", reply_to_message_id=message.message_id if with_reply else None
+#     )
+#     messages_history = await get_messages_history(
+#         client, message.message_id, message.chat.id, -200, 200_000, with_bot=with_bot
+#     )
+#     if not messages_history:
+#         return await message.answer("Не знайдено повідомлень для аналізу.")
+#
+#     ai_conversation = AIConversation(
+#         bot=bot,
+#         storage=state.storage,
+#         ai_provider=AnthropicProvider(
+#             client=anthropic_client,
+#             model_name="claude-3-haiku-20240307",
+#         ),
+#         system_message="""You're a professional summarizer of conversation. You take all messages at determine the most important topics in the conversation.
+# List all discussed topics in the history as a list of bullet points.
+# Use Ukrainian language. Tell the datetime period of the earliest message (e.g. 2022-03-07 12:00).
+# Format each bullet point as follows:
+# • <a href='{earliest message url}}'>{TOPIC}</a>
+# The url should be as it is, and point to the earliest message of the sumarized topic.
+# Make sure to close all the 'a' tags properly.
+# <important_rules>
+# - DO NOT WRITE MESSAGES VERBATIM, JUST SUMMARIZE THEM.
+# - List not more than 30 topics.
+# - The topic descriptions should be distinct and descriptive.
+# - The topic should contain at least 3 messages and be not verbatim text of the message.
+# - Write every topic with an emoji that describes the topic.
+# </important_rule>
+# <example_input>
+# <time>2024-03-15 10:05</time><user>AlexSmith</user>:<message>Hey, does anyone know how we can request the history of this chat? I need it for our monthly review.</message><message_url>https://t.me/bot_devs_novice/914528</message_url>
+# <time>2024-03-15 10:06</time><user>MariaJones</user>:<message>@AlexSmith, I think you can use the chat history request feature in the settings. Just found a link about it.</message><message_url>https://t.me/bot_devs_novice/914529</message_url>
+# <time>2024-03-15 10:08</time><user>JohnDoe</user>:<message>Correct, @MariaJones. Also, ensure that you have the admin rights to do so. Sometimes permissions can be tricky.</message><message_url>https://t.me/bot_devs_novice/914530</message_url>
+# <time>2024-03-15 11:00</time><user>EmilyClark</user>:<message>Has anyone noticed a drop in subscribers after enabling the new feature on the OpenAI chatbot?</message><message_url>https://t.me/bot_devs_novice/914531</message_url>
+# <time>2024-03-15 11:02</time><user>LucasBrown</user>:<message>Yes, @EmilyClark, we experienced the same issue. It seems like the auto-reply feature might be a bit too aggressive.</message><message_url>https://t.me/bot_devs_novice/914532</message_url>
+# <time>2024-03-15 11:05</time><user>SarahMiller</user>:<message>I found a workaround for it. Adjusting the sensitivity settings helped us retain our subscribers. Maybe give that a try?</message><message_url>https://t.me/bot_devs_novice/914533</message_url>
+# <time>2024-03-15 12:00</time><user>KevinWhite</user>:<message>Hey all, don't forget to vote for the DFS feature! There are rewards for participation.</message><message_url>https://t.me/bot_devs_novice/914534</message_url>
+# <time>2024-03-15 12:02</time><user>RachelGreen</user>:<message>@KevinWhite, just voted! Excited about the rewards. Does anyone know when they will be distributed?</message><message_url>https://t.me/bot_devs_novice/914535</message_url>
+# <time>2024-03-15 12:04</time><user>LeoThompson</user>:<message>Usually, rewards get distributed a week after the voting ends. Can't wait to see the new features in action!</message><message_url>https://t.me/bot_devs_novice/914536</message_url>
+# </example_input>
+# <example_format>
+# Нижче наведено вичерпний перелік обговорюваних у цьому чаті тем:
+#
+# • <a href='https://t.me/bot_devs_novice/914528'>📔 Запит на історію чату</a>
+# • <a href='https://t.me/bot_devs_novice/914531'>😢 Втрата підписників чат-ботом OpenAI через певну функцію</a>
+# • <a href='https://t.me/bot_devs_novice/914534'>🏆 Голосування за DFS та винагороди за участь</a>
+# ...
+#
+# Найперше повідомлення датується 2024-03-15 08:13.
+# </example_format>
+# """,
+#         max_tokens=2000,
+#     )
+#     history = f"<messages_history>{messages_history}</messages_history>"
+#     ai_conversation.add_user_message(text=f"Summarize the chat history\n{history}")
+#
+#     try:
+#         await ai_conversation.answer_with_ai(
+#             message,
+#             sent_message,
+#             notification="#history",
+#             apply_formatting=False,
+#         )
+#
+#     except APIStatusError as e:
+#         logging.error(e)
+#         await sent_message.edit_text(
+#             "An error occurred while processing the request. Please try again later."
+#         )
 
 
 @ai_router.message(
@@ -621,36 +621,36 @@ async def set_ai_provider(
     await message.answer(f"Провайдер змінено на {provider}")
 
 
-@ai_router.message(F.text)
-@ai_router.message(F.caption)
-@flags.rate_limit(limit=100, key="ai-history", max_times=1, silent=True)
-async def history_worker(
-    message: types.Message,
-    state: FSMContext,
-    client: Client,
-    anthropic_client: AsyncAnthropic,
-    bot: Bot,
-):
-    state_data = await state.get_data()
-    ai_mode = state_data.get("ai_mode")
-    last_message_id = state_data.get("last_message_id", None)
-    if not last_message_id:
-        await state.update_data({"last_message_id": message.message_id})
-        return
-
-    logging.info(
-        f"Last message id: {last_message_id}, left: {200 - (message.message_id - last_message_id)} messages"
-    )
-    if ai_mode == "OFF":
-        return
-    if message.message_id >= last_message_id + 200:
-        await state.update_data({"last_message_id": message.message_id})
-        # print summarised history
-        await summarize_chat_history(
-            message,
-            state=state,
-            client=client,
-            bot=bot,
-            anthropic_client=anthropic_client,
-            with_bot=False,
-        )
+# @ai_router.message(F.text)
+# @ai_router.message(F.caption)
+# @flags.rate_limit(limit=100, key="ai-history", max_times=1, silent=True)
+# async def history_worker(
+#     message: types.Message,
+#     state: FSMContext,
+#     client: Client,
+#     anthropic_client: AsyncAnthropic,
+#     bot: Bot,
+# ):
+#     state_data = await state.get_data()
+#     ai_mode = state_data.get("ai_mode")
+#     last_message_id = state_data.get("last_message_id", None)
+#     if not last_message_id:
+#         await state.update_data({"last_message_id": message.message_id})
+#         return
+#
+#     logging.info(
+#         f"Last message id: {last_message_id}, left: {200 - (message.message_id - last_message_id)} messages"
+#     )
+#     if ai_mode == "OFF":
+#         return
+#     if message.message_id >= last_message_id + 200:
+#         await state.update_data({"last_message_id": message.message_id})
+#         # print summarised history
+#         await summarize_chat_history(
+#             message,
+#             state=state,
+#             client=client,
+#             bot=bot,
+#             anthropic_client=anthropic_client,
+#             with_bot=False,
+#         )
