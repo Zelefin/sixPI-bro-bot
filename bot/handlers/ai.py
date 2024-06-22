@@ -23,6 +23,7 @@ from bot.misc.ai_prompts import (
     NASTY_MODE,
     YANUKOVICH_MODE,
     JOKE_NATION_MODE,
+    JOKE_ACADEMIC_INTEGRITY_MODE,
 )
 from bot.services.ai_service.ai_conversation import AIConversation
 from bot.services.ai_service.anthropic_provider import (
@@ -534,6 +535,70 @@ async def turn_off_ai(message: types.Message, state: FSMContext):
 async def turn_on_ai(message: types.Message, state: FSMContext):
     await message.answer("Добре, я ввімкнувся.")
     await state.update_data(ai_mode="GOOD")
+
+
+@ai_router.message(Command("honor_joke"))
+@flags.rate_limit(limit=120, key="honor_joke")
+async def determine_academic_integrity(
+    message: types.Message,
+    anthropic_client: AsyncAnthropic,
+    bot: Bot,
+    state: FSMContext,
+):
+    percentage = random.randint(0, 100)
+
+    ai_provider = AnthropicProvider(
+        client=anthropic_client,
+        model_name="claude-3-5-sonnet-20240620",
+    )
+
+    target = (
+        message.reply_to_message.from_user.mention_markdown()
+        if message.reply_to_message
+        else message.from_user.mention_markdown()
+    )
+
+    sent_message = await message.reply("⏳")
+    ai_conversation = AIConversation(
+        bot=bot,
+        ai_provider=ai_provider,
+        storage=state.storage,
+        system_message=JOKE_ACADEMIC_INTEGRITY_MODE.format(
+            percentage=percentage, full_name=target
+        ),
+        max_tokens=200,
+    )
+    ai_conversation.add_user_message(
+        text=message.reply_to_message.text if message.reply_to_message else "/study"
+    )
+
+    usage_cost = await ai_conversation.calculate_cost(
+        Sonnet, message.chat.id, message.from_user.id
+    )
+
+    logging.info(f"Usage cost --- {usage_cost}")
+    try:
+        response = await ai_conversation.answer_with_ai(
+            message=message,
+            sent_message=sent_message,
+            notification="",
+            with_tts=False,
+            apply_formatting=True,
+        )
+        if not response:
+            return
+
+        await ai_conversation.update_usage(
+            message.chat.id,
+            message.from_user.id,
+            response.usage,
+            ai_conversation.max_tokens * 0.75,
+        )
+    except APIStatusError as e:
+        logging.error(e)
+        await sent_message.edit_text(
+            "An error occurred while processing the request. Please try again later."
+        )
 
 
 @ai_router.message(Command("nation"))

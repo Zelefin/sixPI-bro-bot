@@ -21,7 +21,6 @@ class Chat(BaseSettings):
 
 class OpenAI(BaseSettings):
     api_key: str
-    assistance_id: str
 
 
 class ElevenLabs(BaseSettings):
