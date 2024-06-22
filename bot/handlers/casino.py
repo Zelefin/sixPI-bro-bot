@@ -12,7 +12,7 @@ from bot.services.broadcaster import send_message, send_telegram_action
 casino_router = Router()
 
 HOURS = 60 * 60
-MAX_CASINO_BET = 7
+MAX_CASINO_BET = 20
 
 
 # Core logic for determining the win or loss outcome
@@ -23,7 +23,11 @@ async def process_dice_roll(
     rating_bet: int = 1,
 ):
     slots = {
-        1: {"values": ("bar", "bar", "bar"), "coefficient": 7, "prize": "3X BAR"},
+        1: {
+            "values": ("bar", "bar", "bar"),
+            "coefficient": 7,
+            "prize": "3X BAR",
+        },
         22: {
             "values": ("grape", "grape", "grape"),
             "coefficient": 15,
@@ -52,10 +56,10 @@ async def process_dice_roll(
 
     if dice_value not in slots:
         await repo.rating_users.increment_rating_by_user_id(user.id, -rating_bet)
-        await asyncio.sleep(6)
+        await asyncio.sleep(5)
         await message.delete()
 
-        return  # Exit if not a recognized dice value and not from a dice roll
+        return  # Exit if not a recognized dice value and not from a die roll
 
     slot = slots[dice_value]
     coefficient = slot["coefficient"]
@@ -73,24 +77,41 @@ async def process_dice_roll(
         user.id, added_rating
     )
 
-    success_message = f"Користувач {user.full_name} вибив {prize} і отримав {added_rating} рейтингу, тепер у нього {new_rating} рейтингу.\nВітаємо!"
-    # await message.answer(success_message)
+    success_message = (
+        f"Користувач {user.full_name} вибив {prize} і отримав {added_rating} рейтингу, "
+        f"тепер у нього {new_rating} рейтингу.\nВітаємо!"
+    )
     await send_message(bot=message.bot, user_id=message.chat.id, text=success_message)
 
 
 # Command handler for rolling the dice
 @casino_router.message(
-    Command("casino", magic=F.args.regexp(r"(\d+)")), RatingFilter(rating=50)
+    Command("casino", magic=F.args.regexp(r"(\d+)")), RatingFilter(rating=0)
 )
-@casino_router.message(Command("casino", magic=~F.args), RatingFilter(rating=50))
+@casino_router.message(Command("casino", magic=~F.args), RatingFilter(rating=0))
 @flags.rate_limit(limit=1 * HOURS, key="casino", max_times=3)
 async def roll_dice_command(
     message: types.Message,
     bot: Bot,
     repo: RequestsRepo,
     command: CommandObject,
+    rating: int | None = None,
 ):
-    # sent_message = await bot.send_dice(message.chat.id, emoji="🎰")
+    try:
+        rating_bet = abs(min(int(command.args) if command.args else 1, MAX_CASINO_BET))
+    except ValueError:
+        rating_bet = 1
+
+    if rating_bet >= rating:
+        await send_message(
+            bot=bot,
+            user_id=message.chat.id,
+            text="Ви не можете зробити ставку більшу, або рівну вашому рейтингу",
+        )
+        await asyncio.sleep(5)
+        await message.delete()
+        return
+
     sent_message = await send_telegram_action(
         bot.send_dice,
         chat_id=message.chat.id,
@@ -99,11 +120,6 @@ async def roll_dice_command(
     )
     if not sent_message:
         return
-
-    try:
-        rating_bet = abs(min(int(command.args) if command.args else 1, MAX_CASINO_BET))
-    except ValueError:
-        rating_bet = 1
 
     await process_dice_roll(
         message=sent_message, user=message.from_user, rating_bet=rating_bet, repo=repo
