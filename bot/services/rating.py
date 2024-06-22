@@ -9,8 +9,8 @@ from enum import Enum, auto
 
 
 RATING_CACHE_TTL = timedelta(minutes=3)
-POSITIVE_EMOJIS = {"👍", "❤", "🔥", "❤‍🔥", "😁", "🤣"}
-NEGATIVE_EMOJIS = {"👎", "🤡", "💩"}
+POSITIVE_EMOJIS = {"👍", "❤", "🔥", "❤‍🔥", "😁", "🤣", "💘"}
+NEGATIVE_EMOJIS = {"👎", "🤡", "💩", "🖕"}
 
 
 class InterationType(Enum):
@@ -97,15 +97,15 @@ def calculate_rating_change(
 ) -> int:
     if not interaction_type:
         return 0
-    scale = 2
+    scale = 6
     exponent = 2
 
     rank_diff = abs(actor_rank.value - target_rank.value)
     scale_factor = ((actor_rank.value / 6) ** exponent) * rank_diff * scale
-    delta_rating = max(1, min(10, round(scale_factor)))
+    delta_rating = max(5, min(20, round(scale_factor)))
 
     if interaction_type == InterationType.NEGATIVE:
-        delta_rating *= -1
+        delta_rating = round((delta_rating * -1) / 1.5)
 
     return delta_rating
 
@@ -123,3 +123,17 @@ async def reaction_rating_calculator(
     rating_change = calculate_rating_change(actor_rank, helper_rank, reaction_change)
 
     return rating_change
+
+
+if __name__ == '__main__':
+    ranks = [UserRank.PIG_HERDER, UserRank.COSSACK, UserRank.OTAMAN, UserRank.HETMAN, UserRank.SORCERER, UserRank.KING]
+    for actor in ranks:
+        print("*"*30)
+        for target in ranks:
+            print(f"actor - {actor}, target - {target}")
+            print(calculate_rating_change(
+                actor_rank=actor,
+                target_rank=target,
+                interaction_type=InterationType.NEGATIVE
+            ))
+            print("-"*30)
