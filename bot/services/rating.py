@@ -125,15 +125,24 @@ async def reaction_rating_calculator(
     return rating_change
 
 
-if __name__ == '__main__':
-    ranks = [UserRank.PIG_HERDER, UserRank.COSSACK, UserRank.OTAMAN, UserRank.HETMAN, UserRank.SORCERER, UserRank.KING]
+if __name__ == "__main__":
+    ranks = [
+        UserRank.PIG_HERDER,
+        UserRank.COSSACK,
+        UserRank.OTAMAN,
+        UserRank.HETMAN,
+        UserRank.SORCERER,
+        UserRank.KING,
+    ]
     for actor in ranks:
-        print("*"*30)
+        print("*" * 30)
         for target in ranks:
             print(f"actor - {actor}, target - {target}")
-            print(calculate_rating_change(
-                actor_rank=actor,
-                target_rank=target,
-                interaction_type=InterationType.NEGATIVE
-            ))
-            print("-"*30)
+            print(
+                calculate_rating_change(
+                    actor_rank=actor,
+                    target_rank=target,
+                    interaction_type=InterationType.NEGATIVE,
+                )
+            )
+            print("-" * 30)

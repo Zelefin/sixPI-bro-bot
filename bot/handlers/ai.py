@@ -569,7 +569,7 @@ async def determine_academic_integrity(
         max_tokens=200,
     )
     ai_conversation.add_user_message(
-        text=message.reply_to_message.text if message.reply_to_message else "/study"
+        text=message.reply_to_message.text if message.reply_to_message else "/honor"
     )
 
     usage_cost = await ai_conversation.calculate_cost(

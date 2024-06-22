@@ -90,7 +90,6 @@ async def promote_with_title(
             )
             await message.chat.promote(
                 user_id=member_id,
-                can_invite_users=True,
             )
             await message.chat.set_administrator_custom_title(
                 user_id=member_id, custom_title=custom_title

@@ -14,7 +14,7 @@ from pyrogram import Client
 from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
-from bot.handlers.fun import fun_router
+from bot.handlers.other import other_router
 from bot.handlers.ai import ai_router
 from bot.handlers.title import title_router
 from bot.handlers.casino import casino_router
@@ -131,7 +131,7 @@ async def main():
         rating_router,
         casino_router,
         title_router,
-        fun_router,
+        other_router,
         ai_router,
     )
 

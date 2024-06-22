@@ -3,16 +3,15 @@ import re
 
 from aiogram import Router, flags, types
 from aiogram.filters import Command
+from pyrogram import Client
 
+from bot.config_reader import Config
 from bot.misc.parse_numbers import generate_num
 
-fun_router = Router()
+other_router = Router()
 
 
 def determine_gender(name):
-    # Lists of explicit names
-    woman_names = ["Настенька"]
-
     # Women name endings
     women_name_endings = "|".join(
         [
@@ -60,9 +59,7 @@ def determine_gender(name):
     )
 
     # Check explicit list and name suffixes
-    if name in woman_names or re.search(
-        f"\w*({women_name_endings})(\W|$)", name, re.IGNORECASE
-    ):
+    if re.search(f"\w*({women_name_endings})(\W|$)", name, re.IGNORECASE):
         return "woman"
     else:
         return "man"
@@ -87,7 +84,7 @@ def select_emoji(length, is_biba):
     return emojis[-1]
 
 
-@fun_router.message(Command("biba", prefix="!/"))
+@other_router.message(Command("biba", prefix="!/"))
 @flags.rate_limit(limit=60, key="fun")
 async def biba(message: types.Message):
     """Хендлер, для обработки команды /biba или !biba
@@ -134,3 +131,15 @@ async def biba(message: types.Message):
     else:
         # replace with your message for men
         await message.reply(f"{emoji} У {target} біба {length} см")
+
+
+@other_router.message(Command("all"))
+@flags.rate_limit(limit=3600, key="all")
+@flags.override(user_id=1671855842)
+async def tag_all(message: types.Message, client: Client, config: Config) -> None:
+    usernames = ""
+    async for user in client.get_chat_members(config.chat.prod):
+        usernames += f"@{user.user.username} " if user.user.username else ""
+    await message.answer(
+        f"Користувач {message.from_user.mention_html()} скликає всіх!\n\n" + usernames
+    )
