@@ -537,8 +537,8 @@ async def turn_on_ai(message: types.Message, state: FSMContext):
     await state.update_data(ai_mode="GOOD")
 
 
-@ai_router.message(Command("honor_joke"))
-@flags.rate_limit(limit=120, key="honor_joke")
+@ai_router.message(Command("honor"))
+@flags.rate_limit(limit=120, key="honor")
 async def determine_academic_integrity(
     message: types.Message,
     anthropic_client: AsyncAnthropic,

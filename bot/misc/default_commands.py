@@ -4,7 +4,7 @@ from aiogram.types import BotCommand
 
 async def set_default_commands(bot: Bot):
     commands_members = {
-        "honor_joke": "Дізнатися % академічної доброчесності користувача",
+        "honor": "Дізнатися % академічної доброчесності користувача",
         "biba": "Дізнатися скільки см у користувача біба",
         "nation": "Дізнатися національність користувача",
         "top": "Дізнатися топ користувачів",
