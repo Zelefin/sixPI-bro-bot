@@ -566,7 +566,7 @@ async def determine_academic_integrity(
         system_message=JOKE_ACADEMIC_INTEGRITY_MODE.format(
             percentage=percentage, full_name=target
         ),
-        max_tokens=200,
+        max_tokens=400,
     )
     ai_conversation.add_user_message(
         text=message.reply_to_message.text if message.reply_to_message else "/honor"
