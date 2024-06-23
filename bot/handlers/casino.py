@@ -3,6 +3,7 @@ from contextlib import suppress
 
 from aiogram import Bot, F, Router, types, flags
 from aiogram.filters import Command, CommandObject
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import User
 
 from infrastructure.database.repo.requests import RequestsRepo
@@ -95,6 +96,7 @@ async def roll_dice_command(
     bot: Bot,
     repo: RequestsRepo,
     command: CommandObject,
+    fsm_storage: RedisStorage,
     rating: int | None = None,
 ):
     try:
@@ -108,6 +110,7 @@ async def roll_dice_command(
             user_id=message.chat.id,
             text="❌ Ви не можете зробити ставку більшу, або рівну вашому рейтингу",
         )
+        await fsm_storage.redis.delete(f"THROTTLING:casino:{message.from_user.id}")
         await asyncio.sleep(5)
         await message.delete()
         await info_message.delete()

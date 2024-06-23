@@ -210,6 +210,23 @@ async def topup_user(message: types.Message, target_id: int, repo: RequestsRepo)
     await message.answer("Рейтинг поповнено на 100")
 
 
+@rating_router.message(
+    Command("decrement"),
+    AdminFilter(),
+    F.reply_to_message.from_user.id.as_("target_id"),
+)
+async def decrement_user(message: types.Message, target_id: int, repo: RequestsRepo):
+    await repo.rating_users.increment_rating_by_user_id(
+        target_id,
+        (
+            -100
+            if await repo.rating_users.get_rating_by_user_id(user_id=target_id) >= 100
+            else await repo.rating_users.get_rating_by_user_id(user_id=target_id)
+        ),
+    )
+    await message.answer("Рейтинг поповнено на -100 (або стерто весь рейтинг юзера)")
+
+
 @rating_router.message(Command("rating"))
 async def get_user_rating(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
     target = m.reply_to_message.from_user if m.reply_to_message else m.from_user
