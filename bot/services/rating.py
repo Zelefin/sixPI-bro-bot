@@ -97,15 +97,12 @@ def calculate_rating_change(
 ) -> int:
     if not interaction_type:
         return 0
-    scale = 6
-    exponent = 2
 
-    rank_diff = abs(actor_rank.value - target_rank.value)
-    scale_factor = ((actor_rank.value / 6) ** exponent) * rank_diff * scale
-    delta_rating = max(5, min(20, round(scale_factor)))
+    rank_diff = (actor_rank.value - target_rank.value) if (actor_rank.value - target_rank.value) > 0 else 0
+    delta_rating = round(rank_diff * 4 + 25)
 
     if interaction_type == InterationType.NEGATIVE:
-        delta_rating = round((delta_rating * -1) / 1.5)
+        delta_rating = round((delta_rating * -1) / 2.5)
 
     return delta_rating
 
