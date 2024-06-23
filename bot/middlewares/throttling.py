@@ -14,6 +14,15 @@ from aiogram.fsm.storage.redis import RedisStorage
 from bot.services.broadcaster import send_telegram_action
 
 
+def _is_override(data, user_id):
+    override = get_flag(data, "override")
+    logging.info(f"Override: {override}")
+    if override:
+        user_override = override.get("user_id")
+        return user_override == user_id
+    return False
+
+
 class ThrottlingMiddleware(BaseMiddleware):
     def __init__(self, storage: RedisStorage) -> None:
         super().__init__()
@@ -48,7 +57,7 @@ class ThrottlingMiddleware(BaseMiddleware):
             logging.info(f"No rate limit found: {rate_limit}")
             return await handler(event, data)
 
-        if self._is_override(data, user_id):
+        if _is_override(data, user_id):
             return await handler(event, data)
 
         key_prefix = rate_limit.get("key", "antiflood")
@@ -84,11 +93,3 @@ class ThrottlingMiddleware(BaseMiddleware):
 
         # Proceed with the next handler if not throttled
         return await handler(event, data)
-
-    def _is_override(self, data, user_id):
-        override = get_flag(data, "override")
-        logging.info(f"Override: {override}")
-        if override:
-            user_override = override.get("user_id")
-            return user_override == user_id
-        return False

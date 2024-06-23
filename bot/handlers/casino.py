@@ -86,9 +86,9 @@ async def process_dice_roll(
 
 # Command handler for rolling the dice
 @casino_router.message(
-    Command("casino", magic=F.args.regexp(r"(\d+)")), RatingFilter(rating=0)
+    Command("casino", magic=F.args.regexp(r"(\d+)")), RatingFilter(rating=1)
 )
-@casino_router.message(Command("casino", magic=~F.args), RatingFilter(rating=0))
+@casino_router.message(Command("casino", magic=~F.args), RatingFilter(rating=1))
 @flags.rate_limit(limit=1 * HOURS, key="casino", max_times=3)
 async def roll_dice_command(
     message: types.Message,
@@ -103,13 +103,14 @@ async def roll_dice_command(
         rating_bet = 1
 
     if rating_bet >= rating:
-        await send_message(
+        info_message = await send_message(
             bot=bot,
             user_id=message.chat.id,
-            text="Ви не можете зробити ставку більшу, або рівну вашому рейтингу",
+            text="❌ Ви не можете зробити ставку більшу, або рівну вашому рейтингу",
         )
         await asyncio.sleep(5)
         await message.delete()
+        await info_message.delete()
         return
 
     sent_message = await send_telegram_action(

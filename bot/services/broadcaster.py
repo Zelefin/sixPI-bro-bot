@@ -9,7 +9,7 @@ from aiogram.types import InlineKeyboardMarkup
 from typing import Any, Callable
 
 
-async def send_telegram_action(bot_method: Callable[..., Any], *args, **kwargs) -> bool:
+async def send_telegram_action(bot_method: Callable[..., Any], *args, **kwargs):
     """
     Universal Telegram action sender.
 
@@ -45,7 +45,7 @@ async def send_message(
     text: str,
     disable_notification: bool = False,
     reply_markup: InlineKeyboardMarkup = None,
-) -> bool:
+):
     return await send_telegram_action(
         bot.send_message,
         chat_id=user_id,
