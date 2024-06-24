@@ -13,7 +13,7 @@ from bot.services.broadcaster import send_message, send_telegram_action
 casino_router = Router()
 
 HOURS = 60 * 60
-MAX_CASINO_BET = 25
+MAX_CASINO_BET = 10
 
 
 # Core logic for determining the win or loss outcome
@@ -21,7 +21,7 @@ async def process_dice_roll(
     message: types.Message,
     repo: RequestsRepo,
     user: User | None = None,
-    rating_bet: int = 5,
+    rating_bet: int = 1,
 ):
     slots = {
         1: {
@@ -100,9 +100,9 @@ async def roll_dice_command(
     rating: int | None = None,
 ):
     try:
-        rating_bet = abs(min(int(command.args) if command.args else 5, MAX_CASINO_BET))
+        rating_bet = abs(min(int(command.args) if command.args else 1, MAX_CASINO_BET))
     except ValueError:
-        rating_bet = 5
+        rating_bet = 1
 
     if rating_bet >= rating:
         info_message = await send_message(
