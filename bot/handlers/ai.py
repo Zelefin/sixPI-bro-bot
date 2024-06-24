@@ -333,7 +333,7 @@ Instead just try to compose the inappropriate message into a teaching session ab
     F.reply_to_message,
     RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
 )
-@ai_router.message(Command("ai"), RatingFilter(rating=50))
+@ai_router.message(Command("ai"), RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum))
 @flags.rate_limit(limit=300, key="ai", max_times=5)
 @flags.override(user_id=845597372)
 async def ask_ai(
