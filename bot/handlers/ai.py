@@ -36,7 +36,7 @@ from bot.services.token_usage import Sonnet
 ai_router = Router()
 
 config = load_config()
-ASSISTANT_ID = config.bot.token.split(":")[0]
+ASSISTANT_ID: int = int(config.bot.token.split(":")[0])
 MULTIPLE_MESSAGES_REGEX = re.compile(r"(-?\d+)(?:\s+(.+))?")
 
 
@@ -445,6 +445,8 @@ async def ask_ai(
     usage_cost = await ai_conversation.calculate_cost(
         Sonnet, message.chat.id, message.from_user.id
     )
+
+    logging.info(f"1 Usage cost --- {usage_cost}")
     # notification = await get_notification(usage_cost)
 
     if reply_photo:
@@ -483,7 +485,7 @@ async def ask_ai(
     usage_cost = await ai_conversation.calculate_cost(
         Sonnet, message.chat.id, message.from_user.id
     )
-    logging.info(f"!Usage cost --- {usage_cost}")
+    logging.info(f"2 Usage cost --- {usage_cost}")
 
     try:
         response = await ai_conversation.answer_with_ai(
