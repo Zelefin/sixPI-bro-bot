@@ -333,7 +333,10 @@ Instead just try to compose the inappropriate message into a teaching session ab
     F.reply_to_message,
     RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
 )
-@ai_router.message(Command("ai"), RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum))
+@ai_router.message(
+    Command("ai"),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
+)
 @flags.rate_limit(limit=300, key="ai", max_times=5)
 @flags.override(user_id=845597372)
 async def ask_ai(
@@ -367,7 +370,11 @@ async def ask_ai(
         if provider == "anthropic"
         else OpenAIProvider(
             client=openai_client,
-            model_name="gpt-3.5-turbo" if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else "gpt-4o",
+            model_name=(
+                "gpt-3.5-turbo"
+                if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
+                else "gpt-4o"
+            ),
         )
     )
 
@@ -439,7 +446,11 @@ async def ask_ai(
         max_tokens=(
             (400 if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else 700)
             if long_answer
-            else (200 if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else 400)
+            else (
+                200
+                if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
+                else 400
+            )
         ),
     )
     usage_cost = await ai_conversation.calculate_cost(
@@ -561,7 +572,9 @@ async def determine_academic_integrity(
         else message.from_user.mention_markdown()
     )
 
-    sent_message = await message.reply("⏳")
+    sent_message = await message.reply(
+        "⏳ Визначаю рівень академічної доброчесності..."
+    )
     ai_conversation = AIConversation(
         bot=bot,
         ai_provider=ai_provider,
@@ -632,7 +645,7 @@ async def determine_nationality(
         else message.from_user.mention_markdown()
     )
 
-    sent_message = await message.reply("⏳")
+    sent_message = await message.reply("⏳ Аналізую національність...")
     ai_conversation = AIConversation(
         bot=bot,
         ai_provider=ai_provider,

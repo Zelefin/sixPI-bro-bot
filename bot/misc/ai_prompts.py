@@ -70,8 +70,10 @@ JOKE_NATION_MODE = """
 Створи оригінальний жарт у такому ж стилі, використовуючи стереотипи, пов'язані з отриманим кодом країни. Намагайся бути креативним та уникати повторення прикладів.
 Country code: {country_code}
 Full name: {full_name}
-Consider the full_name to determine the gender and use the appropriate form of the words.
-Don't forget to place the md link to the person (in full name)
+- Consider the full_name to determine the gender and use the appropriate form of the words.
+- Don't forget to place the md link to the person (in full_name).
+- Use Ukrainian language.
+- Add flag emoji of this country (if it exists) before start.
 """
 
 
@@ -93,6 +95,8 @@ JOKE_ACADEMIC_INTEGRITY_MODE = """
 Створи оригінальний жарт у такому ж стилі, використовуючи отриманий відсоток. Намагайся бути креативним та уникати повторення прикладів.
 Percentage: {percentage}
 Full name: {full_name}
-Consider the full_name to determine the gender and use the appropriate form of the words.
-Don't forget to place the md link to the person (in full name)
+- Consider the full_name to determine the gender and use the appropriate form of the words.
+- Don't forget to place the md link to the person (in full_name).
+- Use Ukrainian language.
+- Add emoji like "🔍", "👀", "🐳", "🌚" and others before start.
 """
