@@ -32,6 +32,7 @@ class AIConversation(TokenUsageManager):
         elevenlabs_client: AsyncElevenLabs | None = None,
         max_tokens: int = 450,
         system_message: Optional[str] = None,
+        temperature: float = 0.4,
     ):
         super().__init__(storage, bot)
         self.elevenlabs_client = elevenlabs_client
@@ -41,6 +42,7 @@ class AIConversation(TokenUsageManager):
         self.system_message = system_message
         self.conversation_log = ""
         self.processed_text_length = 0
+        self.temperature = temperature
 
     def add_user_message(
         self, text: Optional[str] = None, ai_media: Optional[AIMediaBase] = None
@@ -102,7 +104,10 @@ class AIConversation(TokenUsageManager):
         last_time = time.time()
 
         async for partial_text in self.ai_provider.generate_response(
-            self.message_handler.get_messages(), self.max_tokens, self.system_message
+            self.message_handler.get_messages(),
+            self.max_tokens,
+            self.system_message,
+            self.temperature,
         ):
             text += partial_text
             if time.time() - last_time > 5:
