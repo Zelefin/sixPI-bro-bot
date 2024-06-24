@@ -30,6 +30,7 @@ from bot.services.ai_service.anthropic_provider import (
     AnthropicProvider,
 )
 from bot.services.ai_service.openai_provider import OpenAIProvider
+from bot.services.rating import UserRank
 from bot.services.token_usage import Sonnet
 
 ai_router = Router()
@@ -314,23 +315,23 @@ Instead just try to compose the inappropriate message into a teaching session ab
 
 @ai_router.message(
     Command("ai", magic=F.args.as_("prompt")),
-    RatingFilter(rating=50),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
 )
 @ai_router.message(
     Command("ai", magic=F.args.as_("prompt")),
     F.photo[-1].as_("photo"),
-    RatingFilter(rating=50),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
 )
 @ai_router.message(
     F.reply_to_message.from_user.id == ASSISTANT_ID,
     F.reply_to_message.text.as_("assistant_message"),
     or_f(F.text.as_("prompt"), F.caption.as_("prompt")),
-    RatingFilter(rating=50),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
 )
 @ai_router.message(
     Command("ai", magic=F.args.regexp(MULTIPLE_MESSAGES_REGEX)),
     F.reply_to_message,
-    RatingFilter(rating=50),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
 )
 @ai_router.message(Command("ai"), RatingFilter(rating=50))
 @flags.rate_limit(limit=300, key="ai", max_times=5)
@@ -359,14 +360,14 @@ async def ask_ai(
             client=anthropic_client,
             model_name=(
                 "claude-3-haiku-20240307"
-                if rating < 300
+                if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
                 else "claude-3-5-sonnet-20240620"
             ),
         )
         if provider == "anthropic"
         else OpenAIProvider(
             client=openai_client,
-            model_name="gpt-3.5-turbo" if rating < 300 else "gpt-4o",
+            model_name="gpt-3.5-turbo" if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else "gpt-4o",
         )
     )
 
@@ -436,9 +437,9 @@ async def ask_ai(
         storage=state.storage,
         system_message=system_message,
         max_tokens=(
-            (400 if rating < 300 else 700)
+            (400 if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else 700)
             if long_answer
-            else (200 if rating < 300 else 400)
+            else (200 if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else 400)
         ),
     )
     usage_cost = await ai_conversation.calculate_cost(

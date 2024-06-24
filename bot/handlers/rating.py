@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from aiogram import Bot, F, Router, flags, types
 from aiogram.filters import Command, or_f
@@ -17,6 +18,7 @@ from bot.services.rating import (
     POSITIVE_EMOJIS,
     reaction_rating_calculator,
     change_rating,
+    UserRank,
 )
 from bot.services.cache_profiles import get_profile_cached
 
@@ -73,12 +75,7 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
     current_helpers = await repo.rating_users.get_top_by_rating(50)
     current_helpers_dict = {user_id: rating for user_id, rating in current_helpers}
 
-    kings = []
-    sorcerers = []
-    hetmans = []
-    otamans = []
-    cossacs = []
-    pig_herder = []
+    rank_groups = defaultdict(list)
 
     for user_id, rating in current_helpers:
         profile = await get_profile_cached(state.storage, m.chat.id, user_id, bot)
@@ -92,18 +89,15 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
         )
         helper_entry = (rating, change, profile)
         # Categorize helpers into leagues based on rating
-        if rating >= 1000:
-            kings.append(helper_entry)
-        elif 600 <= rating < 1000:
-            sorcerers.append(helper_entry)
-        elif 300 <= rating < 600:
-            hetmans.append(helper_entry)
-        elif 100 <= rating < 300:
-            otamans.append(helper_entry)
-        elif 50 <= rating <= 100:
-            cossacs.append(helper_entry)
-        elif len(pig_herder) < 10:
-            pig_herder.append(helper_entry)
+        user_rank = UserRank.from_rating(rating)
+        rank_groups[user_rank].append(helper_entry)
+
+    kings = rank_groups[UserRank.KING]
+    sorcerers = rank_groups[UserRank.SORCERER]
+    hetmans = rank_groups[UserRank.HETMAN]
+    otamans = rank_groups[UserRank.OTAMAN]
+    cossacs = rank_groups[UserRank.COSSACK]
+    pig_herder = rank_groups[UserRank.PIG_HERDER][:10]  # only 10
 
     await state.storage.update_data(key=history_key, data={"top": current_helpers_dict})
 
@@ -136,7 +130,8 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
 - <b>🧙‍♂️Чаклуни</b> просто крутіші за гетьманів.
 - <b>🦄Гетьмани</b> можуть змінювати встановлювати собі, всім хто нижче Отаманів кастомні титули.
 - <b>🐘Отамани</b> можуть встановлювати кастомні титули тільки собі.
-- <b>👩‍🌾Свинопаси</b> не можуть користуватися командою /ai
+- <b>🐥Козаки</b> краще за свинопасів.
+- <b>👩‍🌾Свинопаси</b> не можуть користуватися командою /ai.
 
 <b>Правила:</b>
 - Ставьте реакції на повідомлення, деякі позитивні реакції збільшують рейтинг на 10, деякі негативні зменшують на 5.
@@ -163,7 +158,7 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
         F.new_reaction[0].emoji.in_(NEGATIVE_EMOJIS),
         F.old_reaction[0].emoji.in_(NEGATIVE_EMOJIS),
     ),
-    RatingFilter(rating=50),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.COSSACK).minimum),
 )
 async def add_reaction_rating_handler(
     reaction: types.MessageReactionUpdated,
@@ -259,22 +254,22 @@ async def get_user_rating(m: types.Message, repo: RequestsRepo, bot, state: FSMC
     )
 
 
-@rating_router.message(Command("wipe"), F.admin)
+@rating_router.message(Command("wipe"), AdminFilter())
 async def wipe_user_rating(m: types.Message, repo: RequestsRepo):
     await repo.rating_users.wipe_ratings()
     await m.reply("Рейтинги користувачів було очищено.")
 
 
 def determine_user_title(rating):
-    if rating >= 1000:
+    if rating >= UserRank.get_rank_range(UserRank.KING).minimum:
         return "👑 Король"
-    elif rating >= 600:
+    elif rating >= UserRank.get_rank_range(UserRank.SORCERER).minimum:
         return "🧙‍♂️ Чаклун"
-    elif rating >= 300:
+    elif rating >= UserRank.get_rank_range(UserRank.HETMAN).minimum:
         return "🦄 Гетьман"
-    elif rating >= 100:
+    elif rating >= UserRank.get_rank_range(UserRank.OTAMAN).minimum:
         return "🐘 Отаман"
-    elif rating >= 50:
+    elif rating >= UserRank.get_rank_range(UserRank.COSSACK).minimum:
         return "🐥 Козак"
     else:
         return "👩‍🌾 Свинопас"

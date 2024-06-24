@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from infrastructure.database.repo.requests import RequestsRepo
@@ -18,6 +19,12 @@ class InterationType(Enum):
     NEGATIVE = auto()
 
 
+@dataclass
+class RankRange:
+    minimum: int
+    maximum: int
+
+
 class UserRank(Enum):
     PIG_HERDER = auto()
     COSSACK = auto()
@@ -27,19 +34,26 @@ class UserRank(Enum):
     KING = auto()
 
     @classmethod
-    def from_rating(cls, rating: int):
-        if rating >= 1000:
-            return cls.KING
-        elif 600 <= rating < 1000:
-            return cls.SORCERER
-        elif 300 <= rating < 600:
-            return cls.HETMAN
-        elif 100 <= rating < 300:
-            return cls.OTAMAN
-        elif 50 <= rating < 100:
-            return cls.COSSACK
-        else:
-            return cls.PIG_HERDER
+    def from_rating(cls, rating: int) -> "UserRank":
+        for rank, rank_range in _rank_ranges.items():
+            if rank_range.minimum <= rating < rank_range.maximum:
+                return rank
+        # raise ValueError(f"Rating {rating} is out of range for all defined ranks.")
+        return cls.PIG_HERDER
+
+    @classmethod
+    def get_rank_range(cls, rank: "UserRank") -> RankRange:
+        return _rank_ranges.get(rank)
+
+
+_rank_ranges: dict[UserRank, RankRange] = {
+    UserRank.PIG_HERDER: RankRange(0, 50),
+    UserRank.COSSACK: RankRange(50, 100),
+    UserRank.OTAMAN: RankRange(100, 300),
+    UserRank.HETMAN: RankRange(300, 600),
+    UserRank.SORCERER: RankRange(600, 1000),
+    UserRank.KING: RankRange(1000, 9999999999),
+}
 
 
 def get_reaction_change(
@@ -98,7 +112,11 @@ def calculate_rating_change(
     if not interaction_type:
         return 0
 
-    rank_diff = (actor_rank.value - target_rank.value) if (actor_rank.value - target_rank.value) > 0 else 0
+    rank_diff = (
+        (actor_rank.value - target_rank.value)
+        if (actor_rank.value - target_rank.value) > 0
+        else 0
+    )
     delta_rating = round(rank_diff * 3.5 + 10)
 
     if interaction_type == InterationType.NEGATIVE:

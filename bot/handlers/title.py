@@ -5,6 +5,7 @@ import re
 from aiogram import Bot, F, Router, types
 from aiogram.filters import Command
 
+from bot.services.rating import UserRank
 from infrastructure.database.repo.requests import RequestsRepo
 from bot.filters.rating import RatingFilter
 
@@ -15,13 +16,13 @@ title_router = Router()
 @title_router.message(
     Command("title", prefix="/!", magic=F.args.len() > 0),
     F.reply_to_message.from_user.as_("member"),
-    RatingFilter(rating=300),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.HETMAN).minimum),
 )
 @title_router.message(
     Command("title", prefix="/!", magic=F.args.len() > 0),
     ~F.reply_to_message,
     F.from_user.as_("member_self"),
-    RatingFilter(rating=100),
+    RatingFilter(rating=UserRank.get_rank_range(UserRank.OTAMAN).minimum),
 )
 async def promote_with_title(
     message: types.Message,
@@ -41,17 +42,16 @@ async def promote_with_title(
         target_rating = await repo.rating_users.get_rating_by_user_id(member.id) or 0
 
         if rating and not is_admin:
-            if rating > 1000:
-                LIMIT_TARGET_RATING = 600
-            elif rating > 300:
-                LIMIT_TARGET_RATING = 100
-
+            if rating > UserRank.get_rank_range(UserRank.KING).minimum:
+                LIMIT_TARGET_RATING = UserRank.get_rank_range(UserRank.SORCERER).minimum
+            elif rating > UserRank.get_rank_range(UserRank.HETMAN).minimum:
+                LIMIT_TARGET_RATING = UserRank.get_rank_range(UserRank.OTAMAN).minimum
             else:
                 raise ValueError("Неправильний рейтинг для цієї команди")
         elif is_admin:
             LIMIT_TARGET_RATING = 100000
         else:
-            LIMIT_TARGET_RATING = 100
+            LIMIT_TARGET_RATING = UserRank.get_rank_range(UserRank.OTAMAN).minimum
 
         if target_rating > LIMIT_TARGET_RATING:
             return await message.answer(
@@ -117,7 +117,7 @@ async def promote_with_title(
     Command("title", prefix="/!"),
     ~F.reply_to_message,
     F.from_user.as_("member_self"),
-    ~RatingFilter(rating=100),
+    ~RatingFilter(rating=UserRank.get_rank_range(UserRank.OTAMAN).minimum),
 )
 async def not_enough_rating(message: types.Message):
     await message.answer("У вас недостатньо рейтингу для використання цієї команди.")
