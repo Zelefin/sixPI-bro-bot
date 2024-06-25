@@ -31,17 +31,17 @@ async def process_dice_roll(
         },
         22: {
             "values": ("grape", "grape", "grape"),
-            "coefficient": 10,
+            "coefficient": 15,
             "prize": "🍇🍇🍇",
         },
         43: {
             "values": ("lemon", "lemon", "lemon"),
-            "coefficient": 15,
+            "coefficient": 20,
             "prize": "🍋🍋🍋",
         },
         64: {
             "values": ("seven", "seven", "seven"),
-            "coefficient": 20,
+            "coefficient": 40,
             "prize": "🔥ДЖЕКПОТ🔥",
         },
     }
@@ -80,7 +80,7 @@ async def process_dice_roll(
 
     success_message = (
         f"Користувач {user.full_name} вибив {prize} і отримав {added_rating} рейтингу, "
-        f"тепер у нього {new_rating} рейтингу.\nВітаємо!"
+        f"тепер у нього {new_rating} рейтингу.\nВітаємо!😎"
     )
     await send_message(bot=message.bot, user_id=message.chat.id, text=success_message)
 

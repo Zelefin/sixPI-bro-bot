@@ -368,18 +368,20 @@ async def ask_ai(
         AnthropicProvider(
             client=anthropic_client,
             model_name=(
-                "claude-3-haiku-20240307"
-                if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
-                else "claude-3-5-sonnet-20240620"
+                "claude-3-5-sonnet-20240620"
+                # "claude-3-haiku-20240307"
+                # if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
+                # else "claude-3-5-sonnet-20240620"
             ),
         )
         if provider == "anthropic"
         else OpenAIProvider(
             client=openai_client,
             model_name=(
-                "gpt-3.5-turbo"
-                if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
-                else "gpt-4o"
+                "gpt-4o"
+                # "gpt-3.5-turbo"
+                # if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
+                # else "gpt-4o"
             ),
         )
     )
@@ -450,13 +452,16 @@ async def ask_ai(
         storage=state.storage,
         system_message=system_message,
         max_tokens=(
-            (400 if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else 700)
+            1200
             if long_answer
-            else (
-                200
-                if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
-                else 400
-            )
+            else 900
+            # (400 if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum else 700)
+            # if long_answer
+            # else (
+            #     200
+            #     if rating < UserRank.get_rank_range(UserRank.HETMAN).minimum
+            #     else 400
+            # )
         ),
     )
     usage_cost = await ai_conversation.calculate_cost(
