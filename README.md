@@ -1,4 +1,4 @@
 # Six PI Bro Bot
 Simple bot for our local group chat
 
-Mostly inspired by [ChatModerator](https://github.com/BotfatherDev/ChatModerator) developed by [Latand](https://github.com/Latand). 
+This project is mostly inspired by and uses code from the repository [ChatModerator](https://github.com/BotfatherDev/ChatModerator), licensed under the terms of the MIT License.
