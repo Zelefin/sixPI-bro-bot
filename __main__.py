@@ -11,7 +11,6 @@ import httpx
 from openai import AsyncOpenAI
 from pyrogram import Client
 
-from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
 from bot.handlers.other import other_router
@@ -103,8 +102,7 @@ async def main():
     )
 
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
-    engine = create_engine("main.db")
-    db = Database(engine)
+    engine = create_engine(config.postgres.construct_sqlalchemy_url())
     client = Client(
         name="bot",
         bot_token=config.bot.token,
@@ -113,7 +111,6 @@ async def main():
         no_updates=True,  # We don't need to handle incoming updates by client
     )
     dp = Dispatcher(storage=storage, client=client, fsm_strategy=FSMStrategy.CHAT)
-    await db.create_tables()
     session_pool = create_session_pool(engine)
     ratings_cache = {}
     openai_client = AsyncOpenAI(api_key=config.openai.api_key)

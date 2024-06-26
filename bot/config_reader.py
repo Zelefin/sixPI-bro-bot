@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from sqlalchemy.engine.url import URL
 
 
 class Bot(BaseSettings):
@@ -40,6 +41,25 @@ class Redis(BaseSettings):
         return f"redis://{self.host}:{self.port}/{self.db}"
 
 
+class Postgres(BaseSettings):
+    host: str
+    port: int
+    db: str
+    user: str
+    password: str
+
+    def construct_sqlalchemy_url(self) -> str:
+        uri = URL.create(
+            drivername=f"postgresql+asyncpg",
+            username=self.user,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            database=self.db,
+        )
+        return uri.render_as_string(hide_password=False)
+
+
 class Config(BaseSettings):
     bot: Bot
     admin: Admin
@@ -49,6 +69,7 @@ class Config(BaseSettings):
     elevenlabs: ElevenLabs
     anthropic: Anthropic
     redis: Redis
+    postgres: Postgres
 
     class Config:
         env_file = ".env"
