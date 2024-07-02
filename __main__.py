@@ -1,4 +1,12 @@
 import asyncio
+
+from aiogram.webhook.aiohttp_server import (
+    SimpleRequestHandler,
+    setup_application,
+    ip_filter_middleware,
+)
+from aiogram.webhook.security import IPFilter
+from aiohttp import web
 from elevenlabs.client import AsyncElevenLabs
 import logging
 
@@ -28,7 +36,9 @@ from bot.services import broadcaster
 from aiogram.client.default import DefaultBotProperties
 
 
-async def on_startup(bot: Bot, config: Config, client: Client) -> None:
+async def on_startup(bot: Bot, config: Config, client: Client, dp: Dispatcher) -> None:
+    if config.bot.use_webhook:
+        await set_webhook(bot, dp, config)
     await broadcaster.broadcast(bot, [config.admin.id], "Бот був запущений")
     await set_default_commands(bot)
     await client.start()
@@ -36,6 +46,26 @@ async def on_startup(bot: Bot, config: Config, client: Client) -> None:
 
 async def shutdown(client: Client) -> None:
     await client.stop()
+
+
+async def start_dispatcher(bot: Bot, dp: Dispatcher) -> None:
+    print(await bot.delete_webhook())
+    await dp.start_polling(bot)
+
+
+async def set_webhook(bot: Bot, dp: Dispatcher, config: Config) -> None:
+    me = await bot.get_me()
+    url = f"{config.web.domain}{config.bot.webhook_path}"
+    logging.info(
+        f"Run webhook for bot https://t.me/{me.username} "
+        f'id={bot.id} - "{me.full_name}" on {url}'
+    )
+    await bot.set_webhook(
+        url=url,
+        # drop_pending_updates=True,
+        allowed_updates=dp.resolve_used_update_types(),
+        secret_token=config.bot.webhook_secret,
+    )
 
 
 def register_global_middlewares(
@@ -90,10 +120,11 @@ def setup_logging():
     )
     logger = logging.getLogger(__name__)
     logger.info("Starting bot")
+    return logger
 
 
-async def main():
-    setup_logging()
+def main():
+    logger = setup_logging()
 
     config = load_config(".env")
     storage = RedisStorage.from_url(
@@ -139,19 +170,42 @@ async def main():
         anthropic_client=anthropic_client,
         openai_client=openai_client,
         elevenlabs_client=elevenlabs_client,
+        config=config,
+        dp=dp,
     )
 
     dp.message.filter(F.chat.id.in_({config.chat.prod, config.chat.debug}))
 
     bot.session.middleware(BotMessages(session_pool))
-    await bot.delete_webhook()
+
     dp.startup.register(on_startup)
     dp.shutdown.register(shutdown)
-    await dp.start_polling(bot, config=config)
+
+    if config.bot.use_webhook:
+        # Run webhook
+        app = web.Application()
+        app["bot"] = bot
+        app["config"] = config
+
+        webhook_request_handler = SimpleRequestHandler(
+            dispatcher=dp, bot=bot, secret_token=config.bot.webhook_secret
+        )
+        # setup_web_routes(app, config)
+
+        webhook_request_handler.register(app, path=config.bot.webhook_path)
+        setup_application(app, dp, bot=bot)
+
+        ip_filter_middleware(ip_filter=IPFilter.default())
+
+        web.run_app(app, host=config.web.host, port=config.web.port)
+        logger.info(f"Running app on {config.web.host}:{config.web.port}")
+    else:
+        asyncio.run(start_dispatcher(bot=bot, dp=dp))
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        # asyncio.run(main())
+        main()
     except (KeyboardInterrupt, SystemExit):
         logging.error("Бот був вимкнений!")

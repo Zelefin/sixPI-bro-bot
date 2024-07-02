@@ -2,8 +2,18 @@ from pydantic_settings import BaseSettings
 from sqlalchemy.engine.url import URL
 
 
+class Web(BaseSettings):
+    domain: str
+    host: str
+    port: int
+
+
 class Bot(BaseSettings):
     token: str
+    use_webhook: bool
+    webhook_path: str
+    webhook_url: str
+    webhook_secret: str
 
 
 class Admin(BaseSettings):
@@ -61,6 +71,7 @@ class Postgres(BaseSettings):
 
 
 class Config(BaseSettings):
+    web: Web
     bot: Bot
     admin: Admin
     telegram_api: TelegramApi
