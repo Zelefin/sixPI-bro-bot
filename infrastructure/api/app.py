@@ -133,7 +133,11 @@ async def spin(request: SpinRequest):
                 prize = " ".join(result)
                 success_message = f"Користувач {name_with_mention} вибив {prize} і отримав {winAmount} рейтингу, тепер у нього {newBalance} рейтингу.\nВітаємо!"
                 await bot.send_message(
-                    chat_id=config.chat.debug if (await bot.get_my_name()).name == "Just Curious" else config.chat.prod,
+                    chat_id=(
+                        config.chat.debug
+                        if (await bot.get_my_name()).name == "Just Curious"
+                        else config.chat.prod
+                    ),
                     text=success_message,
                     parse_mode="HTML",
                     reply_markup=InlineKeyboardMarkup(
