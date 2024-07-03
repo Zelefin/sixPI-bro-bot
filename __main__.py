@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from aiogram.webhook.aiohttp_server import (
     SimpleRequestHandler,
@@ -19,7 +20,7 @@ import httpx
 from openai import AsyncOpenAI
 from pyrogram import Client
 
-from infrastructure.api.routes import get_balance, demo_handler, spin
+from infrastructure.api.routes import get_balance, index_handler, spin
 from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
@@ -197,9 +198,11 @@ def main():
             dispatcher=dp, bot=bot, secret_token=config.bot.webhook_secret
         )
 
-        app.router.add_get("/demo", demo_handler)
+        app.router.add_get("/", index_handler)
         app.router.add_get("/balance", get_balance)
         app.router.add_post("/spin", spin)
+
+        app.router.add_static('/assets/', Path(__file__).parent.resolve() / "frontend/casino-app/dist" / "assets")
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
         setup_application(app, dp, bot=bot)
