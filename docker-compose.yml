@@ -12,13 +12,12 @@ services:
     working_dir: "/usr/src/app/${BOT_NAME}"
     volumes:
       - .:/usr/src/app/${BOT_NAME}
-    command: sh -c "alembic upgrade head && python3 __main__.py"
+    command: python3 __main__.py
     restart: always
     env_file:
       - ".env"
     networks:
       - tg_bot
-
     logging:
       driver: "json-file"
       options:
@@ -36,55 +35,9 @@ services:
     networks:
       - tg_bot
 
-  rest-api:
-    image: "api"
-    container_name: "sixpibrobot-api"
-    stop_signal: SIGINT
-    build:
-      context: .
-      dockerfile: ./infrastructure/api/Dockerfile
-
-    working_dir: "/usr/src/app/api"
-    volumes:
-      - .:/usr/src/app/api
-    command: [ "uvicorn", "infrastructure.api.app:app", "--host", "0.0.0.0", "--port", "8000" ]
-    restart: always
-    env_file:
-      - ".env"
-    ports:
-      - "8095:8000"
-    networks:
-      - tg_bot
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-
-  pg_database:
-    image: postgres:13-alpine
-    expose:
-      - "5423"
-    restart: always
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    command: -p 5423
-    env_file:
-      - '.env'
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: "trust"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-    networks:
-      - tg_bot
-
 networks:
   tg_bot:
     driver: bridge
 
 volumes:
   cache:
-  pgdata:

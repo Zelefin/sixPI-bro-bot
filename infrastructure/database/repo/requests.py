@@ -5,6 +5,7 @@ from typing import List, Optional
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from infrastructure.database.models import Base
 from infrastructure.database.models.tables import (
     MessageUser,
     RatingUsers,
@@ -102,3 +103,13 @@ class RequestsRepo:
     @property
     def message_user(self) -> MessageUserRepo:
         return MessageUserRepo(self.session)
+
+
+class Database:
+    def __init__(self, engine):
+        self.engine = engine
+
+    async def create_tables(self):
+        # Async function to create tables
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)

@@ -19,6 +19,8 @@ import httpx
 from openai import AsyncOpenAI
 from pyrogram import Client
 
+from infrastructure.api.routes import get_balance, demo_handler, spin
+from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
 from bot.handlers.other import other_router
@@ -36,16 +38,17 @@ from bot.services import broadcaster
 from aiogram.client.default import DefaultBotProperties
 
 
-async def on_startup(bot: Bot, config: Config, client: Client, dp: Dispatcher) -> None:
+async def on_startup(bot: Bot, config: Config, dp: Dispatcher) -> None:
     if config.bot.use_webhook:
         await set_webhook(bot, dp, config)
     await broadcaster.broadcast(bot, [config.admin.id], "Бот був запущений")
     await set_default_commands(bot)
-    await client.start()
+    # await client.start()
 
 
-async def shutdown(client: Client) -> None:
-    await client.stop()
+async def shutdown() -> None:
+    # await client.stop()
+    ...
 
 
 async def start_dispatcher(bot: Bot, dp: Dispatcher) -> None:
@@ -133,15 +136,17 @@ def main():
     )
 
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
-    engine = create_engine(config.postgres.construct_sqlalchemy_url())
-    client = Client(
-        name="bot",
-        bot_token=config.bot.token,
-        api_id=config.telegram_api.id,
-        api_hash=config.telegram_api.hash,
-        no_updates=True,  # We don't need to handle incoming updates by client
-    )
-    dp = Dispatcher(storage=storage, client=client, fsm_strategy=FSMStrategy.CHAT)
+    engine = create_engine(f"sqlite+aiosqlite:///main.db")
+    db = Database(engine)
+    # client = Client(
+    #     name="bot",
+    #     bot_token=config.bot.token,
+    #     api_id=config.telegram_api.id,
+    #     api_hash=config.telegram_api.hash,
+    #     no_updates=True,  # We don't need to handle incoming updates by client
+    # )
+    dp = Dispatcher(storage=storage, fsm_strategy=FSMStrategy.CHAT)
+    asyncio.run(db.create_tables())
     session_pool = create_session_pool(engine)
     ratings_cache = {}
     openai_client = AsyncOpenAI(api_key=config.openai.api_key)
@@ -186,19 +191,23 @@ def main():
         app = web.Application()
         app["bot"] = bot
         app["config"] = config
+        app["session_pool"] = session_pool
 
         webhook_request_handler = SimpleRequestHandler(
             dispatcher=dp, bot=bot, secret_token=config.bot.webhook_secret
         )
-        # setup_web_routes(app, config)
+
+        app.router.add_get("/demo", demo_handler)
+        app.router.add_get("/balance", get_balance)
+        app.router.add_post("/spin", spin)
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
         setup_application(app, dp, bot=bot)
 
         ip_filter_middleware(ip_filter=IPFilter.default())
 
-        web.run_app(app, host=config.web.host, port=config.web.port)
         logger.info(f"Running app on {config.web.host}:{config.web.port}")
+        web.run_app(app, host=config.web.host, port=config.web.port)
     else:
         asyncio.run(start_dispatcher(bot=bot, dp=dp))
 
