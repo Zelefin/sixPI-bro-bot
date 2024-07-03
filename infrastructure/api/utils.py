@@ -29,7 +29,7 @@ def validate_telegram_data(init_data: str) -> bool:
     data_check_string = "\n".join(f"{k}={v}" for k, v in fields)
 
     tokens = [
-        config.tg_bot.token,
+        config.bot.token,
     ]
     # Attempt to validate against each provided token
     for token in tokens:
