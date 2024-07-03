@@ -51,10 +51,11 @@ async def demo_handler(request: Request):
 
 
 async def get_balance(request: Request):
+    user_id = await request.get("user_id")
     session_pool = request.app["session_pool"]
     async with session_pool() as session:
         repo = RequestsRepo(session)
-        balance = await get_user_balance(845597372, repo)
+        balance = await get_user_balance(user_id, repo)
     return json_response({"balance": balance})
 
 
@@ -63,11 +64,13 @@ async def spin(request: Request):
     if not data or not validate_telegram_data(data["_auth"]):
         return json_response({"ok": False, "err": "Unauthorized"}, status=401)
 
-    telegram_data = parse_init_data(data["_auth"])
     session_pool = request.app["session_pool"]
     bot = request.app["bot"]
     config = request.app["config"]
-    stake = int(data["stake"]) if data.get("stake") else 1
+
+    stake = data["stake"] if data.get("stake") else 1
+    telegram_data = parse_init_data(data["_auth"])
+
     user = telegram_data.get("user")
     user = json.loads(user)
     user_id = user.get("id")
@@ -96,12 +99,16 @@ async def spin(request: Request):
                 name_with_mention = f'<a href="tg://user?id={user_id}">{full_name}</a>'
                 prize = " ".join(result)
                 success_message = f"Користувач {name_with_mention} вибив {prize} і отримав {win_amount} рейтингу, тепер у нього {new_balance} рейтингу.\nВітаємо!"
+
+                if (await bot.get_my_name()).name == "Just Curious":
+                    chat_id = config.chat.debug
+                    url = "https://t.me/emmm_my_bot/casino"
+                else:
+                    chat_id = config.chat.prod
+                    url = "https://t.me/SixPiBro_bot/casino"
+
                 await bot.send_message(
-                    chat_id=(
-                        config.chat.debug
-                        if (await bot.get_my_name()).name == "Just Curious"
-                        else config.chat.prod
-                    ),
+                    chat_id=chat_id,
                     text=success_message,
                     parse_mode="HTML",
                     reply_markup=InlineKeyboardMarkup(
@@ -109,7 +116,7 @@ async def spin(request: Request):
                             [
                                 InlineKeyboardButton(
                                     text="🎰 Зіграти теж!",
-                                    url="https://t.me/SixPiBro_bot/casino",
+                                    url=url,
                                 )
                             ]
                         ]
