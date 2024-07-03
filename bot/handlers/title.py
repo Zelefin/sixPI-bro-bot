@@ -43,19 +43,19 @@ async def promote_with_title(
 
         if rating and not is_admin:
             if rating > UserRank.get_rank_range(UserRank.KING).minimum:
-                LIMIT_TARGET_RATING = UserRank.get_rank_range(UserRank.SORCERER).minimum
+                limit_target_rating = UserRank.get_rank_range(UserRank.SORCERER).minimum
             elif rating > UserRank.get_rank_range(UserRank.HETMAN).minimum:
-                LIMIT_TARGET_RATING = UserRank.get_rank_range(UserRank.OTAMAN).minimum
+                limit_target_rating = UserRank.get_rank_range(UserRank.OTAMAN).minimum
             else:
                 raise ValueError("Неправильний рейтинг для цієї команди")
         elif is_admin:
-            LIMIT_TARGET_RATING = 100000
+            limit_target_rating = 100000
         else:
-            LIMIT_TARGET_RATING = UserRank.get_rank_range(UserRank.OTAMAN).minimum
+            limit_target_rating = UserRank.get_rank_range(UserRank.OTAMAN).minimum
 
-        if target_rating > LIMIT_TARGET_RATING:
+        if target_rating > limit_target_rating:
             return await message.answer(
-                f"Користувач має рейтинг більше {LIMIT_TARGET_RATING}, і має імунітет від цієї команди"
+                f"Користувач має рейтинг більше {limit_target_rating}, і має імунітет від цієї команди"
             )
 
     else:
