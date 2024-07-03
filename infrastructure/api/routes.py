@@ -46,16 +46,21 @@ def calculate_winnings(result: list[str], stake: int) -> int:
     return 0
 
 
-async def demo_handler(request: Request):
-    return FileResponse(Path(__file__).parents[2].resolve() / "frontend/demo.html")
+async def index_handler(request: Request):
+    return FileResponse(
+        Path(__file__).parents[2].resolve() / "frontend/casino-app/dist/index.html"
+    )
 
 
 async def get_balance(request: Request):
-    user_id = await request.get("user_id")
+
+    user_id: str | None = request.rel_url.query.get("user_id")
+    if not user_id:
+        return json_response({"balance": 0})
     session_pool = request.app["session_pool"]
     async with session_pool() as session:
         repo = RequestsRepo(session)
-        balance = await get_user_balance(user_id, repo)
+        balance = await get_user_balance(int(user_id), repo)
     return json_response({"balance": balance})
 
 
@@ -68,7 +73,7 @@ async def spin(request: Request):
     bot = request.app["bot"]
     config = request.app["config"]
 
-    stake = data["stake"] if data.get("stake") else 1
+    stake = int(data["stake"]) if data.get("stake") else 1
     telegram_data = parse_init_data(data["_auth"])
 
     user = telegram_data.get("user")
@@ -134,9 +139,11 @@ async def spin(request: Request):
         }
     )
 
-    return {
-        "result": result,
-        "action": action,
-        "winAmount": win_amount,
-        "newBalance": new_balance,
-    }
+    return json_response(
+        {
+            "result": result,
+            "action": action,
+            "winAmount": win_amount,
+            "newBalance": new_balance,
+        }
+    )
