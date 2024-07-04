@@ -23,9 +23,9 @@ function App() {
   const [spinAction, setSpinAction] = useState<string | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [showWinMessage, setShowWinMessage] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
   const [startSpin, setStartSpin] = useState(false);
+  const [spinStatus, setSpinStatus] = useState('initial'); // 'initial', 'spinning', or 'complete'
 
   const payoutInfo = {
     emojis: ['7️⃣', '🎰', '🍇', '🍒', '🍋'],
@@ -38,7 +38,7 @@ function App() {
   }, []);
 
   const handleSpinComplete = useCallback(() => {
-    setShowWinMessage(true);
+    setSpinStatus('complete');
     if (newBalance !== null) {
       setBalance(newBalance);
       setNewBalance(null);
@@ -66,7 +66,6 @@ function App() {
   const postSpin = async () => {
     if (isSpinning) return;
 
-    setShowWinMessage(false);
     const formData = new URLSearchParams();
     formData.append('_auth', window.Telegram.WebApp.initData);
     formData.append('stake', stake.toString());
@@ -81,6 +80,7 @@ function App() {
     });
     const spin: SpinResponse = await spinResponse.json();
 
+    setSpinStatus('spinning');
     setNewBalance(spin.newBalance);
     setSpinResult(spin.result);
     setSpinAction(spin.action);
@@ -108,7 +108,7 @@ function App() {
           emojis={payoutInfo.emojis}
           startSpin={startSpin}
         />
-        {showWinMessage && <WinMessage spinAction={spinAction || ''} winAmount={winAmount || 0}/>}
+        <WinMessage spinStatus={spinStatus} spinAction={spinAction || ''} winAmount={winAmount || 0}/>
         <div className="flex justify-between items-stretch w-full px-4">
           <div className="flex items-center">
             <Stake
@@ -118,7 +118,7 @@ function App() {
               increaseStake={increaseStake}
             />
           </div>
-          <div className="flex items-stretch">
+          <div className="flex items-center">
             <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled}/>
           </div>
         </div>

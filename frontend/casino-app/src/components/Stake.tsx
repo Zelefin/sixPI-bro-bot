@@ -9,8 +9,8 @@ interface StakeProps {
 
 const Stake: React.FC<StakeProps> = ({ stake, balance, decreaseStake, increaseStake }) => {
   return (
-    <div className='text-center'>
-      <p className='text-xl font-bold'>Stake</p>
+      <>
+      {/* <p className='text-xl font-bold'>Stake</p> */}
       <div className="flex items-center justify-center">
         <button 
           onClick={decreaseStake} 
@@ -28,7 +28,7 @@ const Stake: React.FC<StakeProps> = ({ stake, balance, decreaseStake, increaseSt
           +
         </button>
       </div>
-    </div>
+    </>
   );
 };
 
