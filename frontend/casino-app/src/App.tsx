@@ -22,7 +22,7 @@ function App() {
   const [stake, setStake] = useState(1);
   const [spinAction, setSpinAction] = useState<string | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
+  const [isSpinInProgress, setIsSpinInProgress] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
   const [startSpin, setStartSpin] = useState(false);
   const [spinStatus, setSpinStatus] = useState('initial'); // 'initial', 'spinning', or 'complete'
@@ -48,7 +48,7 @@ function App() {
     } else if (spinAction === 'lose') {
       tg.HapticFeedback.impactOccurred("soft");
     }
-  }, [spinAction, tg.HapticFeedback, newBalance]);
+  }, [spinAction, newBalance]);
 
   const fetchBalance = async () => {
     const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
@@ -63,9 +63,12 @@ function App() {
     setBalance(balance.balance);
   };
 
-  const postSpin = async () => {
-    if (isSpinning) return;
+const postSpin = async () => {
+  if (isSpinInProgress) return;
 
+  setIsSpinInProgress(true);
+
+  try {
     const formData = new URLSearchParams();
     formData.append('_auth', window.Telegram.WebApp.initData);
     formData.append('stake', stake.toString());
@@ -86,12 +89,19 @@ function App() {
     setSpinAction(spin.action);
     setWinAmount(spin.winAmount);
     setStartSpin(true);
-  };
+  } catch (error) {
+    console.error('Error during spin:', error);
+  } finally {
+    setIsSpinInProgress(false);
+  }
+};
+
 
   const increaseStake = () => setStake(prev => Math.min(prev + 1, 10));
   const decreaseStake = () => setStake(prev => Math.max(prev - 1, 1));
 
-  const isSpinDisabled = balance === 0 || balance < stake || isSpinning;
+  const isSpinDisabled = balance === 0 || balance < stake || isSpinInProgress;
+
 
   return (
     <div className="flex flex-col h-screen bg-[#010b20] text-white">
@@ -99,8 +109,9 @@ function App() {
       <PayoutInfo emojis={payoutInfo.emojis} multipliers={payoutInfo.multipliers} />
       <div className="flex flex-col items-center justify-center">
         <Slots 
+          key={startSpin ? 'spinning' : 'idle'}
           spinResult={spinResult} 
-          onSpinningChange={setIsSpinning}
+          onSpinningChange={setIsSpinInProgress}
           onSpinComplete={() => {
             handleSpinComplete();
             setStartSpin(false);
@@ -118,8 +129,8 @@ function App() {
               increaseStake={increaseStake}
             />
           </div>
-          <div className="flex items-center">
-            <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled}/>
+          <div className="flex items-end">
+            <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled} isSpinInProgress={isSpinInProgress}/>
           </div>
         </div>
       </div>

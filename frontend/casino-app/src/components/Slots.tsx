@@ -39,7 +39,7 @@ const Slots: React.FC<SlotsProps> = ({ spinResult, onSpinningChange, onSpinCompl
   }, [startSpin, spinResult, onSpinningChange, onSpinComplete]);
 
   return (
-    <div className="grid grid-cols-3 gap-2 m-8">
+    <div className="grid grid-cols-3 gap-2 m-4">
       {displayedEmojis.map((emoji, index) => (
         <div 
           key={index} 
