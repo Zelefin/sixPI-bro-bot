@@ -32,7 +32,7 @@ const WinMessage: React.FC<WinMessageProps> = ({ spinStatus, spinAction, winAmou
       }
       break;
     default:
-      message = '';
+      message = 'err';
       textColor = 'text-white';
   }
 

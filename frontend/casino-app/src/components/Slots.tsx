@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
 interface SlotsProps {
+  startSpin: boolean;
+  setIsSpinInProgress: (isSpinning: boolean) => void;
+  onSpinComplete: () => void;
   spinResult: string[];
   emojis: string[];
-  onSpinningChange: (isSpinning: boolean) => void;
-  onSpinComplete: () => void;
-  startSpin: boolean;
 }
 
-const Slots: React.FC<SlotsProps> = ({ spinResult, onSpinningChange, onSpinComplete, emojis, startSpin }) => {
+const Slots: React.FC<SlotsProps> = ({ spinResult, setIsSpinInProgress, onSpinComplete, emojis, startSpin }) => {
   const getRandomEmojis = (count: number) => {
     return Array(count).fill(null).map(() => emojis[Math.floor(Math.random() * emojis.length)]);
   };
@@ -17,7 +17,7 @@ const Slots: React.FC<SlotsProps> = ({ spinResult, onSpinningChange, onSpinCompl
 
   useEffect(() => {
     if (startSpin) {
-      onSpinningChange(true);
+      setIsSpinInProgress(true);
       const interval = setInterval(() => {
         setDisplayedEmojis(getRandomEmojis(9));
       }, 100);
@@ -30,15 +30,16 @@ const Slots: React.FC<SlotsProps> = ({ spinResult, onSpinningChange, onSpinCompl
           ...getRandomEmojis(3)
         ];
         setDisplayedEmojis(finalEmojis);
-        onSpinningChange(false);
+        setIsSpinInProgress(false);
         onSpinComplete();
       }, 2000);
   
       return () => clearInterval(interval);
     }
-  }, [startSpin, spinResult, onSpinningChange, onSpinComplete]);
+  }, [startSpin, spinResult, setIsSpinInProgress, onSpinComplete]);
 
   return (
+  <div className="relative">
     <div className="grid grid-cols-3 gap-2 m-4">
       {displayedEmojis.map((emoji, index) => (
         <div 
@@ -51,6 +52,9 @@ const Slots: React.FC<SlotsProps> = ({ spinResult, onSpinningChange, onSpinCompl
         </div>
       ))}
     </div>
+    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-0 h-0 border-t-[10px] border-t-transparent border-l-[20px] border-l-yellow-400 border-b-[10px] border-b-transparent"></div>
+    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-0 h-0 border-t-[10px] border-t-transparent border-r-[20px] border-r-yellow-400 border-b-[10px] border-b-transparent"></div>
+  </div>
   );
 };
 

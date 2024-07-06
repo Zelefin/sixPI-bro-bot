@@ -20,7 +20,7 @@ function App() {
   const [balance, setBalance] = useState(0);
   const [spinResult, setSpinResult] = useState(['🍇', '🍒', '🍇']);
   const [stake, setStake] = useState(1);
-  const [spinAction, setSpinAction] = useState<string | null>(null);
+  const [spinAction, setSpinAction] = useState<string | null>(null); // 'win' or 'lose'
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [isSpinInProgress, setIsSpinInProgress] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
@@ -84,11 +84,11 @@ const postSpin = async () => {
     const spin: SpinResponse = await spinResponse.json();
 
     setSpinStatus('spinning');
+    setStartSpin(true);
     setNewBalance(spin.newBalance);
     setSpinResult(spin.result);
     setSpinAction(spin.action);
     setWinAmount(spin.winAmount);
-    setStartSpin(true);
   } catch (error) {
     console.error('Error during spin:', error);
   } finally {
@@ -96,28 +96,22 @@ const postSpin = async () => {
   }
 };
 
-
-  const increaseStake = () => setStake(prev => Math.min(prev + 1, 10));
-  const decreaseStake = () => setStake(prev => Math.max(prev - 1, 1));
-
   const isSpinDisabled = balance === 0 || balance < stake || isSpinInProgress;
-
 
   return (
     <div className="flex flex-col h-screen bg-[#010b20] text-white">
       <Header userName={tg.initDataUnsafe.user?.first_name || 'None'} balance={balance}/>
       <PayoutInfo emojis={payoutInfo.emojis} multipliers={payoutInfo.multipliers} />
       <div className="flex flex-col items-center justify-center">
-        <Slots 
-          key={startSpin ? 'spinning' : 'idle'}
-          spinResult={spinResult} 
-          onSpinningChange={setIsSpinInProgress}
+        <Slots
+          startSpin={startSpin}
+          setIsSpinInProgress={setIsSpinInProgress}
           onSpinComplete={() => {
             handleSpinComplete();
             setStartSpin(false);
           }}
+          spinResult={spinResult} 
           emojis={payoutInfo.emojis}
-          startSpin={startSpin}
         />
         <WinMessage spinStatus={spinStatus} spinAction={spinAction || ''} winAmount={winAmount || 0}/>
         <div className="flex justify-between items-stretch w-full px-4">
@@ -125,12 +119,12 @@ const postSpin = async () => {
             <Stake
               stake={stake}
               balance={balance}
-              decreaseStake={decreaseStake}
-              increaseStake={increaseStake}
+              setStake={setStake}
+              isSpinDisabled={isSpinDisabled}
             />
           </div>
           <div className="flex items-end">
-            <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled} isSpinInProgress={isSpinInProgress}/>
+            <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled} />
           </div>
         </div>
       </div>
