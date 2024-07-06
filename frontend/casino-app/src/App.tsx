@@ -83,6 +83,7 @@ const postSpin = async () => {
     });
     const spin: SpinResponse = await spinResponse.json();
 
+    setBalance(balance - stake);
     setSpinStatus('spinning');
     setStartSpin(true);
     setNewBalance(spin.newBalance);
