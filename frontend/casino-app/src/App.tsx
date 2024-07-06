@@ -125,7 +125,7 @@ const postSpin = async () => {
             />
           </div>
           <div className="flex items-end">
-            <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled} />
+            <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled} isSpinInProgress={isSpinInProgress} />
           </div>
         </div>
       </div>
