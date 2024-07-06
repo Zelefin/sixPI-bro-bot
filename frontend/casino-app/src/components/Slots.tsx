@@ -22,7 +22,7 @@ const Slots: React.FC<SlotsProps> = ({ spinResult, setIsSpinInProgress, onSpinCo
         setDisplayedEmojis(getRandomEmojis(9));
       }, 100);
   
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         clearInterval(interval);
         const finalEmojis = [
           ...getRandomEmojis(3),
@@ -34,7 +34,10 @@ const Slots: React.FC<SlotsProps> = ({ spinResult, setIsSpinInProgress, onSpinCo
         onSpinComplete();
       }, 2000);
   
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
     }
   }, [startSpin, spinResult, setIsSpinInProgress, onSpinComplete]);
 

@@ -8,6 +8,7 @@ import PayoutInfo from "./components/PayoutInfo";
 import winSoundMP3 from "./assets/win.mp3";
 import loseSoundMP3 from "./assets/lose.mp3";
 import spinSoundMP3 from "./assets/spin.mp3";
+import useAudio from "./hooks/useAudio";
 
 interface SpinResponse {
   result: string[];
@@ -17,15 +18,16 @@ interface SpinResponse {
 }
 
 function App() {
-  const winSound = new Audio(winSoundMP3);
-  const loseSound = new Audio(loseSoundMP3);
-  const spinSound = new Audio(spinSoundMP3);
+  const winSound = useAudio(winSoundMP3);
+  const loseSound = useAudio(loseSoundMP3);
+  const spinSound = useAudio(spinSoundMP3);
 
   const tg = window.Telegram.WebApp;
   tg.setHeaderColor("#010b20");
   tg.setBackgroundColor("#010b20");
 
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundToPlay, setSoundToPlay] = useState<string | null>(null);
   const [balance, setBalance] = useState(0);
   const [spinResult, setSpinResult] = useState(['🍇', '🍒', '🍇']);
   const [stake, setStake] = useState(1);
@@ -46,6 +48,18 @@ function App() {
     fetchBalance();
   }, []);
 
+  useEffect(() => {
+    if (soundEnabled && soundToPlay) {
+      if (soundToPlay === winSoundMP3 && winSound.current) {
+        winSound.current.play();
+      } else if (soundToPlay === loseSoundMP3 && loseSound.current) {
+        loseSound.current.play();
+      } else if (soundToPlay === spinSoundMP3 && spinSound.current) {
+        spinSound.current.play();
+      }
+    }
+  }, [soundToPlay, soundEnabled]);
+
   const handleSpinComplete = useCallback(() => {
     setSpinStatus('complete');
     if (newBalance !== null) {
@@ -53,14 +67,10 @@ function App() {
       setNewBalance(null);
     }
     if (spinAction === 'win') {
-      if (soundEnabled){
-        winSound.play();
-      }
+      setSoundToPlay(winSoundMP3);
       tg.HapticFeedback.notificationOccurred("error");
     } else if (spinAction === 'lose') {
-      if (soundEnabled){
-        loseSound.play();
-      }
+      setSoundToPlay(loseSoundMP3);
       tg.HapticFeedback.impactOccurred("soft");
     }
   }, [spinAction, newBalance]);
@@ -82,9 +92,7 @@ const postSpin = async () => {
   if (isSpinInProgress) return;
 
   setIsSpinInProgress(true);
-  if (soundEnabled){
-    spinSound.play();
-  }
+  setSoundToPlay(spinSoundMP3);
 
   try {
     const formData = new URLSearchParams();
