@@ -24,9 +24,9 @@ const Stake: React.FC<StakeProps> = ({ stake, balance, setStake, isSpinDisabled 
                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-500 disabled:active:transform-none"
           disabled={stake === 1 || isSpinDisabled}
         >
-          -
+          <span className="inline-block w-4 text-center">-</span>
         </button>
-        <span className="inline-block px-6 py-3 text-2xl font-bold bg-gray-700 w-16 text-center">
+        <span className="inline-block px-6 py-3 text-2xl font-bold bg-gray-700 w-20 text-center">
           {stake}
         </span>
         <button 
@@ -37,7 +37,7 @@ const Stake: React.FC<StakeProps> = ({ stake, balance, setStake, isSpinDisabled 
                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-500 disabled:active:transform-none"
           disabled={stake === 10 || stake >= balance || isSpinDisabled}
         >
-          +
+          <span className="inline-block w-4 text-center">+</span>
         </button>
       </div>
     </div>
