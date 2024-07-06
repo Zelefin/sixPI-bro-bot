@@ -5,6 +5,9 @@ import SpinButton from "./components/SpinButton";
 import Slots from "./components/Slots";
 import WinMessage from "./components/WinMessage";
 import PayoutInfo from "./components/PayoutInfo";
+import winSoundMP3 from "./assets/win.mp3";
+import loseSoundMP3 from "./assets/lose.mp3";
+import spinSoundMP3 from "./assets/spin.mp3";
 
 interface SpinResponse {
   result: string[];
@@ -14,9 +17,15 @@ interface SpinResponse {
 }
 
 function App() {
+  const winSound = new Audio(winSoundMP3);
+  const loseSound = new Audio(loseSoundMP3);
+  const spinSound = new Audio(spinSoundMP3);
+
   const tg = window.Telegram.WebApp;
   tg.setHeaderColor("#010b20");
   tg.setBackgroundColor("#010b20");
+
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [balance, setBalance] = useState(0);
   const [spinResult, setSpinResult] = useState(['🍇', '🍒', '🍇']);
   const [stake, setStake] = useState(1);
@@ -44,8 +53,14 @@ function App() {
       setNewBalance(null);
     }
     if (spinAction === 'win') {
+      if (soundEnabled){
+        winSound.play();
+      }
       tg.HapticFeedback.notificationOccurred("error");
     } else if (spinAction === 'lose') {
+      if (soundEnabled){
+        loseSound.play();
+      }
       tg.HapticFeedback.impactOccurred("soft");
     }
   }, [spinAction, newBalance]);
@@ -67,6 +82,9 @@ const postSpin = async () => {
   if (isSpinInProgress) return;
 
   setIsSpinInProgress(true);
+  if (soundEnabled){
+    spinSound.play();
+  }
 
   try {
     const formData = new URLSearchParams();
@@ -101,7 +119,7 @@ const postSpin = async () => {
 
   return (
     <div className="flex flex-col h-screen bg-[#010b20] text-white">
-      <Header userName={tg.initDataUnsafe.user?.first_name || 'None'} balance={balance}/>
+      <Header userName={tg.initDataUnsafe.user?.first_name || 'None'} balance={balance} soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}/>
       <PayoutInfo emojis={payoutInfo.emojis} multipliers={payoutInfo.multipliers} />
       <div className="flex flex-col items-center justify-center">
         <Slots
