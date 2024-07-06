@@ -58,7 +58,7 @@ function App() {
         spinSound.current.play();
       }
     }
-  }, [soundToPlay, soundEnabled]);
+  }, [soundToPlay]);
 
   const handleSpinComplete = useCallback(() => {
     setSpinStatus('complete');
