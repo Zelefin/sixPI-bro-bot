@@ -23,6 +23,7 @@ const SpinButton: React.FC<SpinButtonProps> = ({
           rounded-md
           transition-all duration-300 ease-in-out
           active:translate-y-1 active:shadow-inner
+          disabled:active:transform-none
           ${
             isSpinDisabled
               ? "bg-gray-600 cursor-not-allowed"
