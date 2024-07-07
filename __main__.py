@@ -64,7 +64,7 @@ async def set_webhook(bot: Bot, dp: Dispatcher, config: Config) -> None:
     )
     await bot.set_webhook(
         url=url,
-        # drop_pending_updates=True,
+        drop_pending_updates=True,
         allowed_updates=dp.resolve_used_update_types(),
         secret_token=config.bot.webhook_secret,
     )

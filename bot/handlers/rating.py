@@ -137,7 +137,7 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
 - Ставте реакції на повідомлення, деякі позитивні реакції збільшують рейтинг на 10, деякі негативні зменшують на 5.
 - Ви не можете змінювати рейтинг собі
 
-<b>Виграти рейтинг можна в /casino:</b>
+<b>Виграти рейтинг можна в /casino</b>
 """
     await m.answer(text, disable_notification=True)
 
