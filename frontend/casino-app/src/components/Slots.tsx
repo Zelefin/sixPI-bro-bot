@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 
 interface SlotsProps {
   startSpin: boolean;
-  setIsSpinInProgress: (isSpinning: boolean) => void;
   onSpinComplete: () => void;
   spinResult: string[];
   emojis: string[];
@@ -10,7 +9,6 @@ interface SlotsProps {
 
 const Slots: React.FC<SlotsProps> = ({
   spinResult,
-  setIsSpinInProgress,
   onSpinComplete,
   emojis,
   startSpin,
@@ -27,7 +25,6 @@ const Slots: React.FC<SlotsProps> = ({
 
   useEffect(() => {
     if (startSpin) {
-      setIsSpinInProgress(true);
       const interval = setInterval(() => {
         setDisplayedEmojis(getRandomEmojis(9));
       }, 100);
@@ -40,7 +37,6 @@ const Slots: React.FC<SlotsProps> = ({
           ...getRandomEmojis(3),
         ];
         setDisplayedEmojis(finalEmojis);
-        setIsSpinInProgress(false);
         onSpinComplete();
       }, 2000);
 
@@ -49,7 +45,7 @@ const Slots: React.FC<SlotsProps> = ({
         clearTimeout(timeout);
       };
     }
-  }, [startSpin, spinResult, setIsSpinInProgress, onSpinComplete]);
+  }, [startSpin]);
 
   return (
     <div className="relative">

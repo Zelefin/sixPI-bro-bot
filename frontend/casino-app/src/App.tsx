@@ -63,6 +63,7 @@ function App() {
   const handleSpinComplete = useCallback(() => {
     setSpinStatus("complete");
     setStartSpin(false);
+    setIsSpinInProgress(false);
     if (newBalance !== null) {
       setBalance(newBalance);
       setNewBalance(null);
@@ -112,15 +113,13 @@ function App() {
 
       setBalance(balance - stake);
       setSpinStatus("spinning");
-      setStartSpin(true);
       setNewBalance(spin.newBalance);
       setSpinResult(spin.result);
       setSpinAction(spin.action);
       setWinAmount(spin.winAmount);
+      setStartSpin(true);
     } catch (error) {
       console.error("Error during spin:", error);
-    } finally {
-      setIsSpinInProgress(false);
     }
   };
 
@@ -141,11 +140,7 @@ function App() {
       <div className="flex flex-col items-center justify-center">
         <Slots
           startSpin={startSpin}
-          setIsSpinInProgress={setIsSpinInProgress}
-          onSpinComplete={() => {
-            handleSpinComplete();
-            setStartSpin(false);
-          }}
+          onSpinComplete={handleSpinComplete}
           spinResult={spinResult}
           emojis={payoutInfo.emojis}
         />
