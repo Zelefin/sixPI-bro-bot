@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface WinMessageProps {
   spinStatus: string;
@@ -6,41 +6,43 @@ interface WinMessageProps {
   winAmount: number;
 }
 
-const WinMessage: React.FC<WinMessageProps> = ({ spinStatus, spinAction, winAmount }) => {
+const WinMessage: React.FC<WinMessageProps> = ({
+  spinStatus,
+  spinAction,
+  winAmount,
+}) => {
   let message: string;
   let textColor: string;
 
   switch (spinStatus) {
-    case 'initial':
-      message = 'Press Spin Button!';
-      textColor = 'text-white';
+    case "initial":
+      message = "Press Spin Button!";
+      textColor = "text-white";
       break;
-    case 'spinning':
-      message = 'Spinning...';
-      textColor = 'text-yellow-500';
+    case "spinning":
+      message = "Spinning...";
+      textColor = "text-yellow-500";
       break;
-    case 'complete':
-      if (spinAction === 'win') {
+    case "complete":
+      if (spinAction === "win") {
         message = `You won: ${winAmount}`;
-        textColor = 'text-green-500';
-      } else if (spinAction === 'lose') {
-        message = 'Try again';
-        textColor = 'text-red-500';
+        textColor = "text-green-500";
+      } else if (spinAction === "lose") {
+        message = "Try again";
+        textColor = "text-red-500";
       } else {
-        message = 'Spin complete';
-        textColor = 'text-white';
+        message = "Spin complete";
+        textColor = "text-white";
       }
       break;
     default:
-      message = 'err';
-      textColor = 'text-white';
+      message = "err";
+      textColor = "text-white";
   }
 
   return (
-    <div className='bg-gray-800 rounded-xl p-4 mb-3 flex justify-center w-64'>
-      <p className={`text-2xl font-bold ${textColor}`}>
-        {message}
-      </p>
+    <div className="bg-gray-800 rounded-xl p-4 mb-3 flex justify-center w-64">
+      <p className={`text-2xl font-bold ${textColor}`}>{message}</p>
     </div>
   );
 };

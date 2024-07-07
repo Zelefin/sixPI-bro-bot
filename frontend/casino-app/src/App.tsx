@@ -29,19 +29,19 @@ function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundToPlay, setSoundToPlay] = useState<string | null>(null);
   const [balance, setBalance] = useState(0);
-  const [spinResult, setSpinResult] = useState(['🍇', '🍒', '🍇']);
+  const [spinResult, setSpinResult] = useState(["🍇", "🍒", "🍇"]);
   const [stake, setStake] = useState(1);
   const [spinAction, setSpinAction] = useState<string | null>(null); // 'win' or 'lose'
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [isSpinInProgress, setIsSpinInProgress] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
   const [startSpin, setStartSpin] = useState(false);
-  const [spinStatus, setSpinStatus] = useState('initial'); // 'initial', 'spinning', or 'complete'
+  const [spinStatus, setSpinStatus] = useState("initial"); // 'initial', 'spinning', or 'complete'
 
   const payoutInfo = {
-    emojis: ['7️⃣', '🎰', '🍇', '🍒', '🍋'],
-    multipliers: [1500, 500, 18, 12, 4]
-  }
+    emojis: ["7️⃣", "🎰", "🍇", "🍒", "🍋"],
+    multipliers: [1500, 500, 18, 12, 4],
+  };
 
   useEffect(() => {
     tg.expand();
@@ -61,15 +61,16 @@ function App() {
   }, [soundToPlay]);
 
   const handleSpinComplete = useCallback(() => {
-    setSpinStatus('complete');
+    setSpinStatus("complete");
+    setStartSpin(false);
     if (newBalance !== null) {
       setBalance(newBalance);
       setNewBalance(null);
     }
-    if (spinAction === 'win') {
+    if (spinAction === "win") {
       setSoundToPlay(winSoundMP3);
       tg.HapticFeedback.notificationOccurred("error");
-    } else if (spinAction === 'lose') {
+    } else if (spinAction === "lose") {
       setSoundToPlay(loseSoundMP3);
       tg.HapticFeedback.impactOccurred("soft");
     }
@@ -78,57 +79,65 @@ function App() {
   const fetchBalance = async () => {
     const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
     const balanceResponse = await fetch(`/balance?user_id=${userId}`, {
-      method: 'GET',
+      method: "GET",
       headers: {
         "ngrok-skip-browser-warning": "69420",
       },
-      credentials: 'include',
+      credentials: "include",
     });
     const balance = await balanceResponse.json();
     setBalance(balance.balance);
   };
 
-const postSpin = async () => {
-  if (isSpinInProgress) return;
+  const postSpin = async () => {
+    if (isSpinInProgress) return;
 
-  setIsSpinInProgress(true);
-  setSoundToPlay(spinSoundMP3);
+    setIsSpinInProgress(true);
+    setSoundToPlay(spinSoundMP3);
 
-  try {
-    const formData = new URLSearchParams();
-    formData.append('_auth', window.Telegram.WebApp.initData);
-    formData.append('stake', stake.toString());
+    try {
+      const formData = new URLSearchParams();
+      formData.append("_auth", window.Telegram.WebApp.initData);
+      formData.append("stake", stake.toString());
 
-    const spinResponse = await fetch('/spin', {
-      method: 'POST',
-      headers: {
-        "ngrok-skip-browser-warning": "69420",
-      },
-      credentials: 'include',
-      body: formData,
-    });
-    const spin: SpinResponse = await spinResponse.json();
+      const spinResponse = await fetch("/spin", {
+        method: "POST",
+        headers: {
+          "ngrok-skip-browser-warning": "69420",
+        },
+        credentials: "include",
+        body: formData,
+      });
+      const spin: SpinResponse = await spinResponse.json();
 
-    setBalance(balance - stake);
-    setSpinStatus('spinning');
-    setStartSpin(true);
-    setNewBalance(spin.newBalance);
-    setSpinResult(spin.result);
-    setSpinAction(spin.action);
-    setWinAmount(spin.winAmount);
-  } catch (error) {
-    console.error('Error during spin:', error);
-  } finally {
-    setIsSpinInProgress(false);
-  }
-};
+      setBalance(balance - stake);
+      setSpinStatus("spinning");
+      setStartSpin(true);
+      setNewBalance(spin.newBalance);
+      setSpinResult(spin.result);
+      setSpinAction(spin.action);
+      setWinAmount(spin.winAmount);
+    } catch (error) {
+      console.error("Error during spin:", error);
+    } finally {
+      setIsSpinInProgress(false);
+    }
+  };
 
   const isSpinDisabled = balance === 0 || balance < stake || isSpinInProgress;
 
   return (
     <div className="flex flex-col h-screen bg-[#010b20] text-white">
-      <Header userName={tg.initDataUnsafe.user?.first_name || 'None'} balance={balance} soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}/>
-      <PayoutInfo emojis={payoutInfo.emojis} multipliers={payoutInfo.multipliers} />
+      <Header
+        userName={tg.initDataUnsafe.user?.first_name || "None"}
+        balance={balance}
+        soundEnabled={soundEnabled}
+        setSoundEnabled={setSoundEnabled}
+      />
+      <PayoutInfo
+        emojis={payoutInfo.emojis}
+        multipliers={payoutInfo.multipliers}
+      />
       <div className="flex flex-col items-center justify-center">
         <Slots
           startSpin={startSpin}
@@ -137,10 +146,14 @@ const postSpin = async () => {
             handleSpinComplete();
             setStartSpin(false);
           }}
-          spinResult={spinResult} 
+          spinResult={spinResult}
           emojis={payoutInfo.emojis}
         />
-        <WinMessage spinStatus={spinStatus} spinAction={spinAction || ''} winAmount={winAmount || 0}/>
+        <WinMessage
+          spinStatus={spinStatus}
+          spinAction={spinAction || ""}
+          winAmount={winAmount || 0}
+        />
         <div className="flex justify-between items-stretch w-full px-4">
           <div className="flex items-center">
             <Stake
@@ -151,12 +164,16 @@ const postSpin = async () => {
             />
           </div>
           <div className="flex items-end">
-            <SpinButton postSpin={postSpin} isSpinDisabled={isSpinDisabled} isSpinInProgress={isSpinInProgress} />
+            <SpinButton
+              postSpin={postSpin}
+              isSpinDisabled={isSpinDisabled}
+              isSpinInProgress={isSpinInProgress}
+            />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default App;
