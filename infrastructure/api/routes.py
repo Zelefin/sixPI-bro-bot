@@ -130,15 +130,6 @@ async def spin(request: Request):
             except Exception as e:
                 logging.error(f"Error sending message: {e}")
 
-    print(
-        {
-            "result": result,
-            "action": action,
-            "winAmount": win_amount,
-            "newBalance": new_balance,
-        }
-    )
-
     return json_response(
         {
             "result": result,
