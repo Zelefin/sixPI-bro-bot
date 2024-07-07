@@ -39,21 +39,19 @@ from bot.services import broadcaster
 from aiogram.client.default import DefaultBotProperties
 
 
-async def on_startup(bot: Bot, config: Config, dp: Dispatcher) -> None:
+async def on_startup(bot: Bot, config: Config, client: Client, dp: Dispatcher) -> None:
     if config.bot.use_webhook:
         await set_webhook(bot, dp, config)
     await broadcaster.broadcast(bot, [config.admin.id], "Бот був запущений")
     await set_default_commands(bot)
-    # await client.start()
+    await client.start()
 
 
-async def shutdown() -> None:
-    # await client.stop()
-    ...
+async def shutdown(client: Client) -> None:
+    await client.stop()
 
 
 async def start_dispatcher(bot: Bot, dp: Dispatcher) -> None:
-    print(await bot.delete_webhook())
     await dp.start_polling(bot)
 
 
@@ -139,13 +137,13 @@ def main():
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
     engine = create_engine(f"sqlite+aiosqlite:///main.db")
     db = Database(engine)
-    # client = Client(
-    #     name="bot",
-    #     bot_token=config.bot.token,
-    #     api_id=config.telegram_api.id,
-    #     api_hash=config.telegram_api.hash,
-    #     no_updates=True,  # We don't need to handle incoming updates by client
-    # )
+    client = Client(
+        name="bot",
+        bot_token=config.bot.token,
+        api_id=config.telegram_api.id,
+        api_hash=config.telegram_api.hash,
+        no_updates=True,  # We don't need to handle incoming updates by client
+    )
     dp = Dispatcher(storage=storage, fsm_strategy=FSMStrategy.CHAT)
     asyncio.run(db.create_tables())
     session_pool = create_session_pool(engine)
@@ -177,6 +175,7 @@ def main():
         openai_client=openai_client,
         elevenlabs_client=elevenlabs_client,
         config=config,
+        client=client,
         dp=dp,
     )
 
@@ -202,7 +201,10 @@ def main():
         app.router.add_get("/balance", get_balance)
         app.router.add_post("/spin", spin)
 
-        app.router.add_static('/assets/', Path(__file__).parent.resolve() / "frontend/casino-app/dist" / "assets")
+        app.router.add_static(
+            "/assets/",
+            Path(__file__).parent.resolve() / "frontend/casino-app/dist" / "assets",
+        )
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
         setup_application(app, dp, bot=bot)
@@ -217,7 +219,6 @@ def main():
 
 if __name__ == "__main__":
     try:
-        # asyncio.run(main())
         main()
     except (KeyboardInterrupt, SystemExit):
         logging.error("Бот був вимкнений!")
