@@ -14,6 +14,8 @@ services:
       - .:/usr/src/app/${BOT_NAME}
     command: python3 __main__.py
     restart: always
+    environment:
+      - BOT_NAME=${BOT_NAME}
     env_file:
       - ".env"
     networks:

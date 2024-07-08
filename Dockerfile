@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 # get BOT_NAME from .env !
-ENV BOT_NAME=mybotname
+ENV BOT_NAME=${BOT_NAME}
 
 # Install FFmpeg
 RUN apt-get update && apt-get install -y ffmpeg
