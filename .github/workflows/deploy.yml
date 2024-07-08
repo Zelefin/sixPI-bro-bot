@@ -46,7 +46,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: build
-          path: frontend/casino-app/dist/
+          path: dist/
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -54,4 +54,4 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy to server
-        run: scp -r frontend/casino-app/dist/* ${{ secrets.DEPLOY_USER }}
+        run: scp -r dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}
