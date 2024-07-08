@@ -20,19 +20,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd sixPI-bro-bot/frontend/casino-app
+          cd frontend/casino-app
           npm install
 
       - name: Build project
         run: |
-          cd sixPI-bro-bot/frontend/casino-app
+          cd frontend/casino-app
           npm run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v2
         with:
           name: build
-          path: sixPI-bro-bot/frontend/casino-app/dist/
+          path: frontend/casino-app/dist/
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: build
-          path: sixPI-bro-bot/frontend/casino-app/dist/
+          path: frontend/casino-app/dist/
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -54,4 +54,4 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy to server
-        run: scp -r sixPI-bro-bot/frontend/casino-app/dist/* ${{ secrets.DEPLOY_USER }}
+        run: scp -r frontend/casino-app/dist/* ${{ secrets.DEPLOY_USER }}
