@@ -1,0 +1,15 @@
+[Unit]
+Description=sixPI-bro-bot
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/ubuntu/sixPI-bro-bot
+ExecStart=/home/ubuntu/sixPI-bro-bot/.venv/bin/python3.11 /home/ubuntu/sixPI-bro-bot/__main__.py
+RestartSec=10
+Restart=always
+ 
+[Install]
+WantedBy=multi-user.target
