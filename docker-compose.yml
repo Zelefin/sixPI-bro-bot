@@ -13,7 +13,7 @@ services:
         BOT_NAME: "${BOT_NAME}"
     working_dir: "/usr/src/app/${BOT_NAME}"
     volumes:
-      - db_data:/usr/src/app/${BOT_NAME}/main.db
+      - db_data:/usr/src/app/${BOT_NAME}/data
     command: python3 __main__.py
     restart: always
     environment:

@@ -135,7 +135,9 @@ def main():
     )
 
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
-    engine = create_engine(f"sqlite+aiosqlite:///main.db")
+    engine = create_engine(
+        f"sqlite+aiosqlite:///{Path(__file__).parent.resolve()}/data/main.db"
+    )
     db = Database(engine)
     client = Client(
         name="bot",

@@ -3,7 +3,7 @@
 export CONTAINER_NAME=SixPIBroBot
 export BOT_NAME=SixPIBroBot
 mkdir -p ./dump
-docker cp ${CONTAINER_NAME}:/usr/src/app/${BOT_NAME}/main.db ./dump/main.db
+docker cp ${CONTAINER_NAME}:/usr/src/app/${BOT_NAME}/data/main.db ./dump/main.db
 
 if [ $? -eq 0 ]; then
   echo "Dump successfully created."

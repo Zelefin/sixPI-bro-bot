@@ -17,7 +17,7 @@ fi
 export CONTAINER_NAME=SixPIBroBot
 export BOT_NAME=SixPIBroBot
 
-docker cp "$FILE_PATH" ${CONTAINER_NAME}:/usr/src/app/${BOT_NAME}/main.db
+docker cp "$FILE_PATH" ${CONTAINER_NAME}:/usr/src/app/${BOT_NAME}/data/main.db
 
 if [ $? -eq 0 ]; then
   echo "File successfully copied to container."
