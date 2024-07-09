@@ -9,6 +9,8 @@ services:
       - "8080:8080"
     build:
       context: .
+      args:
+        BOT_NAME: "${BOT_NAME}"
     working_dir: "/usr/src/app/${BOT_NAME}"
     volumes:
       - db_data:/usr/src/app/${BOT_NAME}/main.db
