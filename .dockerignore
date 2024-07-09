@@ -240,7 +240,6 @@ cython_debug/
 #.idea/
 
 
-bot.session
 frontend/*
 !frontend/casino-app/dist
 !frontend/casino-app/dist/**
