@@ -11,7 +11,7 @@ services:
       context: .
     working_dir: "/usr/src/app/${BOT_NAME}"
     volumes:
-      - .:/usr/src/app/${BOT_NAME}
+      - db_data:/usr/src/app/${BOT_NAME}/main.db
     command: python3 __main__.py
     restart: always
     environment:
@@ -25,6 +25,8 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+    depends_on:
+      - redis_cache
 
   redis_cache:
     image: redis:6.2-alpine
@@ -43,3 +45,4 @@ networks:
 
 volumes:
   cache:
+  db_data:
