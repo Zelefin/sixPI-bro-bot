@@ -79,7 +79,7 @@ function App() {
 
   const fetchBalance = async () => {
     const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
-    const balanceResponse = await fetch(`/balance?user_id=${userId}`, {
+    const balanceResponse = await fetch(`/get_balance?user_id=${userId}`, {
       method: "GET",
       headers: {
         "ngrok-skip-browser-warning": "69420",
@@ -101,7 +101,7 @@ function App() {
       formData.append("_auth", window.Telegram.WebApp.initData);
       formData.append("stake", stake.toString());
 
-      const spinResponse = await fetch("/spin", {
+      const spinResponse = await fetch("/casino/spin", {
         method: "POST",
         headers: {
           "ngrok-skip-browser-warning": "69420",

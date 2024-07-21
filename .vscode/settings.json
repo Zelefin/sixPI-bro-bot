@@ -1,5 +1,0 @@
-{
-  "CodeGPT.apiKey": "Anthropic",
-  "python.analysis.typeCheckingMode": "off",
-  "python.analysis.autoImportCompletions": true
-}

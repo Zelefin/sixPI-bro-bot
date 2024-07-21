@@ -4,22 +4,14 @@ import random
 from pathlib import Path
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiohttp import web
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_request import Request
 from aiohttp.web_response import json_response
 
+from infrastructure.api.common_routes import get_user_balance, update_user_balance
 from infrastructure.api.utils import validate_telegram_data, parse_init_data
 from infrastructure.database.repo.requests import RequestsRepo
-
-
-async def get_user_balance(user_id: int, repo: RequestsRepo) -> int:
-    return await repo.rating_users.get_rating_by_user_id(user_id) or 0
-
-
-async def update_user_balance(
-    user_id: int, new_balance: int, repo: RequestsRepo
-) -> None:
-    await repo.rating_users.update_rating_by_user_id(user_id, new_balance)
 
 
 # Game logic
@@ -50,18 +42,6 @@ async def index_handler(request: Request):
     return FileResponse(
         Path(__file__).parents[2].resolve() / "frontend/casino-app/dist/index.html"
     )
-
-
-async def get_balance(request: Request):
-
-    user_id: str | None = request.rel_url.query.get("user_id")
-    if not user_id:
-        return json_response({"balance": 0})
-    session_pool = request.app["session_pool"]
-    async with session_pool() as session:
-        repo = RequestsRepo(session)
-        balance = await get_user_balance(int(user_id), repo)
-    return json_response({"balance": balance})
 
 
 async def spin(request: Request):
@@ -138,3 +118,8 @@ async def spin(request: Request):
             "newBalance": new_balance,
         }
     )
+
+
+def setup_casino_routes(app: web.Application):
+    app.router.add_get("", index_handler)
+    app.router.add_post("/spin", spin)

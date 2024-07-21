@@ -20,7 +20,9 @@ import httpx
 from openai import AsyncOpenAI
 from pyrogram import Client
 
-from infrastructure.api.routes import get_balance, index_handler, spin
+from infrastructure.api.casino_routes import setup_casino_routes
+from infrastructure.api.common_routes import setup_common_routes
+from infrastructure.api.poker_routes import setup_poker_routes
 from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
@@ -199,14 +201,29 @@ def main():
             dispatcher=dp, bot=bot, secret_token=config.bot.webhook_secret
         )
 
-        app.router.add_get("/", index_handler)
-        app.router.add_get("/balance", get_balance)
-        app.router.add_post("/spin", spin)
+        setup_common_routes(app)
 
-        app.router.add_static(
+        casino_app = web.Application()
+        casino_app["bot"] = bot
+        casino_app["config"] = config
+        casino_app["session_pool"] = session_pool
+        setup_casino_routes(casino_app)
+        casino_app.router.add_static(
             "/assets/",
-            Path(__file__).parent.resolve() / "frontend/casino-app/dist" / "assets",
+            Path(__file__).parent.resolve() / "frontend/casino-app/dist/assets",
         )
+        app.add_subapp("/casino", casino_app)
+
+        poker_app = web.Application()
+        poker_app["bot"] = bot
+        poker_app["config"] = config
+        poker_app["session_pool"] = session_pool
+        setup_poker_routes(poker_app)
+        poker_app.router.add_static(
+            "/assets/",
+            Path(__file__).parent.resolve() / "frontend/poker-app/dist/assets",
+        )
+        app.add_subapp("/poker", poker_app)
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
         setup_application(app, dp, bot=bot)
