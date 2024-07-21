@@ -13,3 +13,7 @@ async def index_handler(request: Request):
 
 def setup_poker_routes(app: web.Application):
     app.router.add_get("", index_handler)
+    app.router.add_static(
+        "/assets/",
+        Path(__file__).parents[2].resolve() / "frontend/poker-app/dist/assets",
+    )

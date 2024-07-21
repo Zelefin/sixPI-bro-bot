@@ -123,3 +123,7 @@ async def spin(request: Request):
 def setup_casino_routes(app: web.Application):
     app.router.add_get("", index_handler)
     app.router.add_post("/spin", spin)
+    app.router.add_static(
+        "/assets/",
+        Path(__file__).parents[2].resolve() / "frontend/casino-app/dist/assets",
+    )

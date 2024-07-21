@@ -208,10 +208,6 @@ def main():
         casino_app["config"] = config
         casino_app["session_pool"] = session_pool
         setup_casino_routes(casino_app)
-        casino_app.router.add_static(
-            "/assets/",
-            Path(__file__).parent.resolve() / "frontend/casino-app/dist/assets",
-        )
         app.add_subapp("/casino", casino_app)
 
         poker_app = web.Application()
@@ -219,10 +215,6 @@ def main():
         poker_app["config"] = config
         poker_app["session_pool"] = session_pool
         setup_poker_routes(poker_app)
-        poker_app.router.add_static(
-            "/assets/",
-            Path(__file__).parent.resolve() / "frontend/poker-app/dist/assets",
-        )
         app.add_subapp("/poker", poker_app)
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
