@@ -1,5 +1,5 @@
-import { initClosingBehavior } from "@telegram-apps/sdk-react";
-import { BsFillInfoCircleFill } from "react-icons/bs";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
   Input,
@@ -9,55 +9,80 @@ import {
   Select,
   Snackbar,
 } from "@telegram-apps/telegram-ui";
-import type { FC } from "react";
-import { useState } from "react";
+import { BsFillInfoCircleFill } from "react-icons/bs";
 import { GoPlusCircle } from "react-icons/go";
 
-export const CreateTable: FC = () => {
-  const [closingBehavior] = initClosingBehavior();
-  closingBehavior.enableConfirmation();
-
+export const CreateTable: React.FC = () => {
+  const navigate = useNavigate();
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snakbarDescription, setSnackbarDescription] = useState("");
+  const [snackbarDescription, setSnackbarDescription] = useState("");
   const [tableName, setTableName] = useState("");
   const [tableNameStatus, setTableNameStatus] = useState<"default" | "error">(
     "default"
   );
+  const [selectedBuyIn, setSelectedBuyIn] = useState("10/30");
+  const [selectedPlayers, setSelectedPlayers] = useState("2");
 
-  const handleCreateTable = () => {
+  const handleBuyInSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOption = event.target.value;
+    setSelectedBuyIn(selectedOption);
+
+    const buyInOptions: { [key: string]: number } = {
+      "10/30": 10,
+      "50/100": 50,
+      "100/200": 100,
+    };
+
+    const minBuyIn = buyInOptions[selectedOption];
+    const smallBlind = Math.round(minBuyIn * 0.1);
+    const bigBlind = smallBlind * 2;
+
+    setSnackbarMessage(`Small Blind: ${smallBlind}, Big Blind: ${bigBlind}`);
+    setSnackbarDescription(
+      "Blinds are calculated automatically based on the selected buy-in."
+    );
+    setShowSnackbar(true);
+  };
+
+  const handleCreateTable = async () => {
     if (tableName.trim() === "") {
       setTableNameStatus("error");
       setSnackbarMessage("Table name cannot be empty");
       setSnackbarDescription("Please enter a valid table name");
       setShowSnackbar(true);
-    } else {
-      setTableNameStatus("default");
-      // Add your logic here for creating the table
-      console.log("Table created with name:", tableName);
+      return;
     }
-  };
 
-  const handleBuyInSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log("here");
-    const selectedOption = event.target.value;
+    const [minBuyIn, maxBuyIn] = selectedBuyIn.split("/").map(Number);
+    const maxPlayers = Number(selectedPlayers);
 
-    const buyInOptions = {
-      "10/30 chips": 10,
-      "50/100 chips": 50,
-      "100/200 chips": 100,
-    };
+    try {
+      const response = await fetch("/poker/api/create_table", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: tableName,
+          minBuyIn,
+          maxBuyIn,
+          maxPlayers,
+        }),
+      });
 
-    const minBuyIn = buyInOptions[selectedOption as keyof typeof buyInOptions];
-    const smallBlind = Math.round(minBuyIn * 0.1);
-    const bigBlind = smallBlind * 2;
+      if (!response.ok) {
+        throw new Error("Failed to create table");
+      }
 
-    const message = `Small Blind: ${smallBlind}, Big Blind: ${bigBlind}`;
-    setSnackbarMessage(message);
-    setSnackbarDescription(
-      "Blinds are calculated automatically based on the selected buy-in."
-    );
-    setShowSnackbar(true);
+      const newTable = await response.json();
+      navigate(`/table/${newTable.id}`);
+    } catch (error) {
+      console.error("Error creating table:", error);
+      setSnackbarMessage("Failed to create table");
+      setSnackbarDescription("Please try again later");
+      setShowSnackbar(true);
+    }
   };
 
   return (
@@ -82,15 +107,23 @@ export const CreateTable: FC = () => {
           header="Table Settings"
           footer="Set Buy-ins to automatically calculate blinds (Small blind: 10% of minimum buy-in, Big blind: Small blind * 2)."
         >
-          <Select header="Buy-ins" onChange={handleBuyInSelect}>
-            <option>10/30 chips</option>
-            <option>50/100 chips</option>
-            <option>100/200 chips</option>
+          <Select
+            header="Buy-ins"
+            value={selectedBuyIn}
+            onChange={handleBuyInSelect}
+          >
+            <option value="10/30">10/30 chips</option>
+            <option value="50/100">50/100 chips</option>
+            <option value="100/200">100/200 chips</option>
           </Select>
-          <Select header="Players">
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i + 1} value={(i + 1).toString()}>
-                {i + 1}
+          <Select
+            header="Players"
+            value={selectedPlayers}
+            onChange={(e) => setSelectedPlayers(e.target.value)}
+          >
+            {Array.from({ length: 11 }, (_, i) => (
+              <option key={i + 2} value={(i + 2).toString()}>
+                {i + 2}
               </option>
             ))}
           </Select>
@@ -109,7 +142,7 @@ export const CreateTable: FC = () => {
         <Snackbar
           onClose={() => setShowSnackbar(false)}
           before={<BsFillInfoCircleFill size={20} />}
-          description={snakbarDescription}
+          description={snackbarDescription}
           duration={5000}
         >
           {snackbarMessage}

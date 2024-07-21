@@ -13,6 +13,6 @@ interface Route {
 
 export const routes: Route[] = [
   { path: "/", Component: IndexPage },
-  { path: "/table", Component: TablePage },
+  { path: "/table/:tableId", Component: TablePage },
   { path: "/create_table", Component: CreateTable },
 ];
