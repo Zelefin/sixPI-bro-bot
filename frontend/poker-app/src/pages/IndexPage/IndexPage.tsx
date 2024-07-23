@@ -10,12 +10,14 @@ import {
   Spinner,
   Title,
 } from "@telegram-apps/telegram-ui";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import { GoPlusCircle } from "react-icons/go";
 import { IoPeopleSharp } from "react-icons/io5";
 import { FaPiggyBank } from "react-icons/fa6";
 import { PiCoins } from "react-icons/pi";
 import { MdOutlineRefresh } from "react-icons/md";
 import { Link } from "react-router-dom";
+import Header from "@/components/Header";
 
 interface Table {
   id: string;
@@ -29,8 +31,10 @@ interface Table {
 }
 
 export const IndexPage: React.FC = () => {
+  const { initDataRaw, initData } = retrieveLaunchParams();
   const [tables, setTables] = useState<Table[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [balance, setBalance] = useState(0);
 
   const fetchTables = async () => {
     setIsLoading(true);
@@ -48,8 +52,17 @@ export const IndexPage: React.FC = () => {
     }
   };
 
+  const fetchBalance = async () => {
+    const userId = initData?.user?.id;
+    const balanceResponse = await fetch(`/get_balance?user_id=${userId}`);
+    const balance = await balanceResponse.json();
+    setBalance(balance.balance);
+  };
+
   useEffect(() => {
+    console.log(initDataRaw);
     fetchTables();
+    fetchBalance();
 
     const intervalId = setInterval(fetchTables, 10000);
 
@@ -58,7 +71,14 @@ export const IndexPage: React.FC = () => {
 
   return (
     <>
-      <LargeTitle className="text-center text-blue-600 mb-2">Tables</LargeTitle>
+      <Header
+        userName={initData?.user?.firstName || "None"}
+        balance={balance}
+      />
+      <Divider />
+      <LargeTitle className="text-center text-text-color mb-2">
+        Tables
+      </LargeTitle>
       {isLoading ? (
         <div className="grid place-items-center">
           <Spinner size="m" />
