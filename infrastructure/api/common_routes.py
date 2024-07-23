@@ -1,6 +1,7 @@
 from aiohttp.web_request import Request
 from aiohttp import web
 from aiohttp.web_response import json_response
+import aiohttp_cors
 
 from infrastructure.database.repo.requests import RequestsRepo
 
@@ -27,4 +28,15 @@ async def get_balance(request: Request):
 
 
 def setup_common_routes(app: web.Application):
+    cors = aiohttp_cors.setup(
+        app,
+        defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True, expose_headers="*", allow_headers="*"
+            )
+        },
+    )
     app.router.add_get("/get_balance", get_balance)
+
+    for route in list(app.router.routes()):
+        cors.add(route)

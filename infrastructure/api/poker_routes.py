@@ -3,6 +3,8 @@ from aiohttp.web_request import Request
 from aiohttp.web_response import json_response
 from aiohttp.web_fileresponse import FileResponse
 from pathlib import Path
+
+import aiohttp_cors
 from infrastructure.api.poker_api.table import (
     get_available_tables,
     create_table,
@@ -82,6 +84,14 @@ async def get_table_details(request: Request):
 
 
 def setup_poker_routes(app: web.Application):
+    cors = aiohttp_cors.setup(
+        app,
+        defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True, expose_headers="*", allow_headers="*"
+            )
+        },
+    )
     app.router.add_get("", index_handler)
     app.router.add_get("/api/tables", get_tables)
     app.router.add_post("/api/create_table", create_table_handler)
@@ -91,3 +101,5 @@ def setup_poker_routes(app: web.Application):
         "/assets/",
         Path(__file__).parents[2].resolve() / "frontend/poker-app/dist/assets",
     )
+    for route in list(app.router.routes()):
+        cors.add(route)

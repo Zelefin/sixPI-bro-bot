@@ -21,6 +21,26 @@ export default defineConfig({
   server: {
     // Exposes your dev server and makes it accessible for the devices in the same network.
     host: true,
+    
+    // For development
+    proxy: {
+      '/poker/api': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/get_balance': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/poker/ws': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      }
+    }
   },
 });
 
