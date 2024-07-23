@@ -7,16 +7,16 @@ import {
   List,
   Section,
   Select,
-  Snackbar,
 } from "@telegram-apps/telegram-ui";
-import { BsFillInfoCircleFill } from "react-icons/bs";
+import { initHapticFeedback } from "@telegram-apps/sdk";
 import { GoPlusCircle } from "react-icons/go";
+import { initPopup } from "@telegram-apps/sdk-react";
 
 export const CreateTable: React.FC = () => {
   const navigate = useNavigate();
-  const [showSnackbar, setShowSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarDescription, setSnackbarDescription] = useState("");
+  const hapticFeedback = initHapticFeedback();
+  const popup = initPopup();
+  const [blindsMessage, setBlindsMessage] = useState("1/2 blinds");
   const [tableName, setTableName] = useState("");
   const [tableNameStatus, setTableNameStatus] = useState<"default" | "error">(
     "default"
@@ -38,19 +38,18 @@ export const CreateTable: React.FC = () => {
     const smallBlind = Math.round(minBuyIn * 0.1);
     const bigBlind = smallBlind * 2;
 
-    setSnackbarMessage(`Small Blind: ${smallBlind}, Big Blind: ${bigBlind}`);
-    setSnackbarDescription(
-      "Blinds are calculated automatically based on the selected buy-in."
-    );
-    setShowSnackbar(true);
+    setBlindsMessage(`${smallBlind}/${bigBlind} blinds`);
   };
 
   const handleCreateTable = async () => {
     if (tableName.trim() === "") {
       setTableNameStatus("error");
-      setSnackbarMessage("Table name cannot be empty");
-      setSnackbarDescription("Please enter a valid table name");
-      setShowSnackbar(true);
+      hapticFeedback.notificationOccurred("error");
+      popup.open({
+        title: "Table name cannot be empty!",
+        message: "Please enter a valid table name.",
+        buttons: [{ id: "my-id", type: "close" }],
+      });
       return;
     }
 
@@ -79,15 +78,13 @@ export const CreateTable: React.FC = () => {
       navigate(`/table/${newTable.id}`);
     } catch (error) {
       console.error("Error creating table:", error);
-      setSnackbarMessage("Failed to create table");
-      setSnackbarDescription("Please try again later");
-      setShowSnackbar(true);
+      hapticFeedback.notificationOccurred("error");
     }
   };
 
   return (
     <>
-      <LargeTitle className="text-center text-blue-600 mb-2">
+      <LargeTitle className="text-center text-text-color mb-2">
         Create Table
       </LargeTitle>
       <List>
@@ -116,6 +113,11 @@ export const CreateTable: React.FC = () => {
             <option value="50/100">50/100 chips</option>
             <option value="100/200">100/200 chips</option>
           </Select>
+          <Input
+            disabled={true}
+            header="Small/Big Blinds"
+            placeholder={blindsMessage}
+          ></Input>
           <Select
             header="Players"
             value={selectedPlayers}
@@ -138,16 +140,6 @@ export const CreateTable: React.FC = () => {
           </Button>
         </div>
       </List>
-      {showSnackbar && (
-        <Snackbar
-          onClose={() => setShowSnackbar(false)}
-          before={<BsFillInfoCircleFill size={20} />}
-          description={snackbarDescription}
-          duration={5000}
-        >
-          {snackbarMessage}
-        </Snackbar>
-      )}
     </>
   );
 };
