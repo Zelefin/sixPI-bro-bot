@@ -43,6 +43,12 @@ export const App: FC = () => {
     return () => navigator.detach();
   }, [navigator]);
 
+  navigator.on("change", (ev) => {
+    if (ev.to.pathname === "/") {
+      navigator.goTo(0);
+    }
+  });
+
   return (
     <AppRoot>
       <Router location={location} navigator={reactNavigator}>
