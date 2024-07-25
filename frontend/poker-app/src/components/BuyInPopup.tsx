@@ -3,6 +3,7 @@ import { Button } from "@telegram-apps/telegram-ui";
 import { initHapticFeedback, initPopup } from "@telegram-apps/sdk-react";
 
 interface BuyInPopupProps {
+  balance: number;
   minBuyIn: number;
   maxBuyIn: number;
   onSubmit: (amount: number) => void;
@@ -10,6 +11,7 @@ interface BuyInPopupProps {
 }
 
 export const BuyInPopup: React.FC<BuyInPopupProps> = ({
+  balance,
   minBuyIn,
   maxBuyIn,
   onSubmit,
@@ -56,6 +58,10 @@ export const BuyInPopup: React.FC<BuyInPopupProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-section-bg-color p-6 rounded-lg shadow-lg max-w-sm w-full">
         <h2 className="text-xl font-bold mb-4">Enter your buy-in</h2>
+        <div className="flex">
+          <p>Your balance:</p>
+          <p className="font-bold ml-1">{balance}</p>
+        </div>
         <p className="mb-4">
           Please enter an amount between {minBuyIn} and {maxBuyIn}
         </p>
