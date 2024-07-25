@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { initClosingBehavior } from "@telegram-apps/sdk-react";
-import { LargeTitle } from "@telegram-apps/telegram-ui";
+import {
+  initClosingBehavior,
+  retrieveLaunchParams,
+} from "@telegram-apps/sdk-react";
+import { LargeTitle, Spinner } from "@telegram-apps/telegram-ui";
 import { BuyInPopup } from "@/components/BuyInPopup";
 
 export const TablePage: React.FC = () => {
+  const { initData } = retrieveLaunchParams();
   const [closingBehavior] = initClosingBehavior();
   closingBehavior.enableConfirmation();
 
@@ -13,6 +17,8 @@ export const TablePage: React.FC = () => {
   const [playerCount, setPlayerCount] = useState<number>(0);
   const [tableDetails, setTableDetails] = useState<any>(null);
   const [showBuyInPopup, setShowBuyInPopup] = useState(true);
+
+  const [balance, setBalance] = useState(0);
 
   // Fetch table details
   useEffect(() => {
@@ -31,6 +37,13 @@ export const TablePage: React.FC = () => {
 
     fetchTableDetails();
   }, [tableId]);
+
+  const fetchBalance = async () => {
+    const userId = initData?.user?.id;
+    const balanceResponse = await fetch(`/get_balance?user_id=${userId}`);
+    const balance = await balanceResponse.json();
+    setBalance(balance.balance);
+  };
 
   // Handle buy-in submission
   const handleBuyInSubmit = (amount: number) => {
@@ -57,6 +70,8 @@ export const TablePage: React.FC = () => {
 
   // WebSocket connection
   useEffect(() => {
+    fetchBalance();
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
     const socket = new WebSocket(`${protocol}//${host}/poker/ws/${tableId}`);
@@ -79,7 +94,11 @@ export const TablePage: React.FC = () => {
 
   // Render loading state if table details are not yet loaded
   if (!tableDetails) {
-    return <div className="p-4">Loading table details...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner size="m" />
+      </div>
+    );
   }
 
   return (
@@ -95,6 +114,7 @@ export const TablePage: React.FC = () => {
       </p>
       {showBuyInPopup && (
         <BuyInPopup
+          balance={balance}
           minBuyIn={tableDetails.minBuyIn}
           maxBuyIn={tableDetails.maxBuyIn}
           onSubmit={handleBuyInSubmit}
