@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 
 from aiogram import Bot, F, Router, flags, types
-from aiogram.filters import Command, or_f
+from aiogram.filters import Command, or_f, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import StorageKey
 from aiogram.exceptions import TelegramBadRequest
@@ -190,31 +190,33 @@ async def add_reaction_rating_handler(
         )
 
 
-@rating_router.message(
-    Command("topup"),
-    AdminFilter(),
-    F.reply_to_message.from_user.id.as_("target_id"),
-)
-async def topup_user(message: types.Message, target_id: int, repo: RequestsRepo):
-    await repo.rating_users.increment_rating_by_user_id(target_id, 100)
-    await message.answer("Рейтинг поповнено на 100")
+@rating_router.message(Command("setrating"), AdminFilter())
+async def set_user_rating(
+    message: types.Message, command: CommandObject, repo: RequestsRepo
+):
+    if not message.reply_to_message:
+        await message.reply(
+            "Цю команду потрібно використовувати як відповідь на повідомлення користувача."
+        )
+        return
 
+    args = command.args
+    if not args:
+        await message.reply("Використання: /setrating [новий_рейтинг]")
+        return
+    try:
+        new_rating = int(args)
+    except ValueError:
+        await message.reply("Новий рейтинг має бути дійсним цілим числом.")
+        return
+    target_user = message.reply_to_message.from_user
+    await repo.rating_users.update_rating_by_user_id(target_user.id, new_rating)
 
-@rating_router.message(
-    Command("decrement"),
-    AdminFilter(),
-    F.reply_to_message.from_user.id.as_("target_id"),
-)
-async def decrement_user(message: types.Message, target_id: int, repo: RequestsRepo):
-    await repo.rating_users.increment_rating_by_user_id(
-        target_id,
-        (
-            -100
-            if await repo.rating_users.get_rating_by_user_id(user_id=target_id) >= 100
-            else await repo.rating_users.get_rating_by_user_id(user_id=target_id)
-        ),
+    new_title = determine_user_title(new_rating)
+
+    await message.reply(
+        f"Рейтинг користувача {target_user.full_name} змінено на {new_rating}.\nНове звання: {new_title}"
     )
-    await message.answer("Рейтинг поповнено на -100")
 
 
 @rating_router.message(Command("rating"))
