@@ -1,6 +1,7 @@
 import json
 import logging
 import random
+import time
 from pathlib import Path
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -12,6 +13,21 @@ from aiohttp.web_response import json_response
 from infrastructure.api.common_routes import get_user_balance, update_user_balance
 from infrastructure.api.utils import validate_telegram_data, parse_init_data
 from infrastructure.database.repo.requests import RequestsRepo
+
+
+# Rate limiting
+RATE_LIMIT = 2  # requests per second
+last_request_time = {}
+
+
+def check_rate_limit(user_id: int) -> bool:
+    current_time = time.time()
+    if user_id in last_request_time:
+        time_passed = current_time - last_request_time[user_id]
+        if time_passed < 1 / RATE_LIMIT:
+            return True
+    last_request_time[user_id] = current_time
+    return False
 
 
 # Game logic
@@ -53,12 +69,15 @@ async def spin(request: Request):
     bot = request.app["bot"]
     config = request.app["config"]
 
-    stake = int(data["stake"]) if data.get("stake") else 1
+    stake = abs(int(data["stake"])) if data.get("stake") else 1
     telegram_data = parse_init_data(data["_auth"])
 
     user = telegram_data.get("user")
     user = json.loads(user)
     user_id = user.get("id")
+
+    if check_rate_limit(user_id):
+        return json_response({"ok": False, "err": "Rate limit exceeded"}, status=429)
 
     async with session_pool() as session:
         repo = RequestsRepo(session)

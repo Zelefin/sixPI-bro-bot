@@ -109,6 +109,13 @@ function App() {
         credentials: "include",
         body: formData,
       });
+
+      if (spinResponse.status === 429) {
+        setSpinStatus("limit");
+        setIsSpinInProgress(false);
+        return;
+      }
+
       const spin: SpinResponse = await spinResponse.json();
 
       setBalance(balance - stake);
@@ -120,6 +127,7 @@ function App() {
       setStartSpin(true);
     } catch (error) {
       console.error("Error during spin:", error);
+      setIsSpinInProgress(false);
     }
   };
 

@@ -35,6 +35,10 @@ const WinMessage: React.FC<WinMessageProps> = ({
         textColor = "text-white";
       }
       break;
+    case "limit":
+      message = "Try after some time";
+      textColor = "text-white";
+      break;
     default:
       message = "err";
       textColor = "text-white";
