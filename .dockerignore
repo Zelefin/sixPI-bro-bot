@@ -243,3 +243,6 @@ cython_debug/
 frontend/*
 !frontend/casino-app/dist
 !frontend/casino-app/dist/**
+
+!frontend/wordle-app/dist
+!frontend/wordle-app/dist/**

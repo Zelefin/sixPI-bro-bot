@@ -11,10 +11,12 @@ import spinSoundMP3 from "./assets/spin.mp3";
 import useAudio from "./hooks/useAudio";
 
 interface SpinResponse {
-  result: string[];
-  action: string;
-  winAmount: number;
-  newBalance: number;
+  ok: boolean;
+  result?: string[];
+  action?: string;
+  winAmount?: number;
+  newBalance?: number;
+  err?: string;
 }
 
 function App() {
@@ -118,15 +120,22 @@ function App() {
 
       const spin: SpinResponse = await spinResponse.json();
 
-      setBalance(balance - stake);
-      setSpinStatus("spinning");
-      setNewBalance(spin.newBalance);
-      setSpinResult(spin.result);
-      setSpinAction(spin.action);
-      setWinAmount(spin.winAmount);
-      setStartSpin(true);
+      if (!spin.ok) {
+        setSpinStatus("err");
+        setIsSpinInProgress(false);
+        console.log(spin.err);
+      } else {
+        setBalance(balance - stake);
+        setSpinStatus("spinning");
+        setNewBalance(spin.newBalance ? spin.newBalance : null);
+        setSpinResult(spin.result ? spin.result : ["🍇", "🍒", "🍇"]);
+        setSpinAction(spin.action ? spin.action : null);
+        setWinAmount(spin.winAmount ? spin.winAmount : null);
+        setStartSpin(true);
+      }
     } catch (error) {
       console.error("Error during spin:", error);
+      setSpinStatus("err");
       setIsSpinInProgress(false);
     }
   };

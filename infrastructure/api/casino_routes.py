@@ -62,18 +62,22 @@ async def index_handler(request: Request):
 
 async def spin(request: Request):
     data = await request.post()
-    if not data or not validate_telegram_data(data["_auth"]):
+    if not data or not validate_telegram_data(data.get("_auth")):
         return json_response({"ok": False, "err": "Unauthorized"}, status=401)
 
     session_pool = request.app["session_pool"]
     bot = request.app["bot"]
     config = request.app["config"]
 
-    stake = abs(int(data["stake"])) if data.get("stake") else 1
-    telegram_data = parse_init_data(data["_auth"])
+    try:
+        stake = abs(int(data["stake"])) if data.get("stake") else 1
+        if stake == 0:
+            stake = 1
+    except ValueError:
+        stake = 1
 
-    user = telegram_data.get("user")
-    user = json.loads(user)
+    telegram_data = parse_init_data(data.get("_auth"))
+    user = json.loads(telegram_data.get("user"))
     user_id = user.get("id")
 
     if check_rate_limit(user_id):
@@ -131,6 +135,7 @@ async def spin(request: Request):
 
     return json_response(
         {
+            "ok": True,
             "result": result,
             "action": action,
             "winAmount": win_amount,

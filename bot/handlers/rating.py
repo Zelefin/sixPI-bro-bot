@@ -11,7 +11,7 @@ from cachetools import TTLCache
 from bot.filters.admin import AdminFilter
 from infrastructure.database.repo.requests import RequestsRepo
 from bot.filters.rating import RatingFilter
-from bot.handlers.casino import HOURS
+from bot.handlers.web_apps import HOURS
 from bot.middlewares.ratings_cache import RatingCacheReactionMiddleware
 from bot.services.rating import (
     NEGATIVE_EMOJIS,

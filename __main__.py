@@ -22,14 +22,14 @@ from pyrogram import Client
 
 from infrastructure.api.casino_routes import setup_casino_routes
 from infrastructure.api.common_routes import setup_common_routes
-from infrastructure.api.poker_routes import setup_poker_routes
+from infrastructure.api.wordle_routes import setup_wordle_routes
 from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
 from bot.handlers.other import other_router
 from bot.handlers.ai import ai_router
 from bot.handlers.title import title_router
-from bot.handlers.casino import casino_router
+from bot.handlers.web_apps import web_apps_router
 from bot.handlers.rating import rating_router
 
 from bot.middlewares.bot_messages import BotMessages
@@ -165,7 +165,7 @@ def main():
 
     dp.include_routers(
         rating_router,
-        casino_router,
+        web_apps_router,
         title_router,
         other_router,
         ai_router,
@@ -210,12 +210,19 @@ def main():
         setup_casino_routes(casino_app)
         app.add_subapp("/casino", casino_app)
 
-        poker_app = web.Application()
-        poker_app["bot"] = bot
-        poker_app["config"] = config
-        poker_app["session_pool"] = session_pool
-        setup_poker_routes(poker_app)
-        app.add_subapp("/poker", poker_app)
+        wordle_app = web.Application()
+        wordle_app["bot"] = bot
+        wordle_app["config"] = config
+        wordle_app["session_pool"] = session_pool
+        setup_wordle_routes(wordle_app)
+        app.add_subapp("/wordle", wordle_app)
+
+        # poker_app = web.Application()
+        # poker_app["bot"] = bot
+        # poker_app["config"] = config
+        # poker_app["session_pool"] = session_pool
+        # setup_poker_routes(poker_app)
+        # app.add_subapp("/poker", poker_app)
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
         setup_application(app, dp, bot=bot)
