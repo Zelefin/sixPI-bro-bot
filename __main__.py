@@ -19,6 +19,8 @@ from anthropic import AsyncAnthropic
 import httpx
 from openai import AsyncOpenAI
 from pyrogram import Client
+from redis.asyncio.client import Redis
+from redis.asyncio.connection import ConnectionPool
 
 from infrastructure.api.casino_routes import setup_casino_routes
 from infrastructure.api.common_routes import setup_common_routes
@@ -131,6 +133,8 @@ def main():
     logger = setup_logging()
 
     config = load_config(".env")
+    pool = ConnectionPool.from_url(config.redis.make_connection_string())
+    redis = Redis(connection_pool=pool)
     storage = RedisStorage.from_url(
         config.redis.make_connection_string(),
         key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
@@ -213,6 +217,7 @@ def main():
         wordle_app = web.Application()
         wordle_app["bot"] = bot
         wordle_app["config"] = config
+        wordle_app["redis"] = redis
         wordle_app["session_pool"] = session_pool
         setup_wordle_routes(wordle_app)
         app.add_subapp("/wordle", wordle_app)
