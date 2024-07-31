@@ -2,30 +2,79 @@ import json
 import logging
 from math import log
 from pathlib import Path
+import random
 import aiohttp_cors
 from aiohttp import web
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import json_response
 from aiohttp.web_request import Request
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from redis.asyncio.client import Redis
+from datetime import datetime, timedelta
+import pytz
 
 from infrastructure.api.common_routes import get_user_balance, update_user_balance
 from infrastructure.api.utils import parse_init_data, validate_telegram_data
 from infrastructure.database.repo.requests import RequestsRepo
+from infrastructure.api.words import answers, other_words
 
 
-async def get_secret_word() -> str:
-    return "ЛИСТЯ"
+win_amounts = {
+    0: 500,
+    1: 100,
+    2: 50,
+    3: 25,
+    4: 10,
+    5: 5,
+}
 
 
-async def get_common_words() -> list[str]:
-    return ["ЛИСТЯ", "ДИМАР", "КЕФІР", "ОСІНЬ", "ВЕСНА", "ЦУЦИК"]
-
-
-async def index_handler(request: Request):
-    return FileResponse(
-        Path(__file__).parents[2].resolve() / "frontend/wordle-app/dist/index.html"
+# Function to get the time remaining until midnight in Kyiv
+def get_seconds_until_midnight_kyiv() -> int:
+    kyiv_tz = pytz.timezone("Europe/Kiev")
+    now = datetime.now(kyiv_tz)
+    midnight = (now + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
+    return int((midnight - now).total_seconds())
+
+
+async def get_secret_word(redis: Redis) -> str:
+    """
+    Get or set the secret word for the day, with expiration at midnight Kyiv time.
+    """
+    if secret_word := await redis.get("secret_word"):
+        return secret_word.decode("utf-8")
+    else:
+        random_word = random.choice(answers)
+        seconds_until_midnight = get_seconds_until_midnight_kyiv()
+        await redis.set(
+            name="secret_word", value=random_word, ex=seconds_until_midnight
+        )
+        return random_word
+
+
+async def get_user_attempts(redis: Redis, user_id: int) -> int:
+    """
+    Get the number of attempts made by a user for the current day.
+    """
+    key = f"user_attempts:{user_id}"
+    attempts = await redis.get(key)
+    return int(attempts) if attempts else 0
+
+
+async def add_user_attempt(redis: Redis, user_id: int, amount: int = 1) -> None:
+    """
+    Increment the user's attempt count for the current day.
+    """
+    key = f"user_attempts:{user_id}"
+    seconds_until_midnight = get_seconds_until_midnight_kyiv()
+
+    # Use pipeline to ensure atomicity of operations
+    async with redis.pipeline(transaction=True) as pipe:
+        await pipe.incr(key, amount)
+        await pipe.expire(key, seconds_until_midnight)
+        await pipe.execute()
 
 
 def check_word(guess_word: str, secret_word: str) -> dict:
@@ -39,33 +88,34 @@ def check_word(guess_word: str, secret_word: str) -> dict:
     Returns:
     dict: A dictionary containing the result of the guess.
     """
-    result = {
-        "correct_letters": [],
-        "misplaced_letters": [],
-        "incorrect_letters": [],
-        "is_correct": False,
-    }
+    result = {"is_correct": False, "word": ""}
 
-    # Convert words to uppercase for case-insensitive comparison
-    guess_word = guess_word.upper()
-    secret_word = secret_word.upper()
+    # Convert words to lowercase for case-insensitive comparison
+    guess_word = guess_word.lower()
+    secret_word = secret_word.lower()
 
     # Check if the guess is correct
     if guess_word == secret_word:
         result["is_correct"] = True
-        result["correct_letters"] = list(guess_word)
+        result["word"] = "!" + "!".join(guess_word)
         return result
 
     # Check each letter in the guess word
     for i, letter in enumerate(guess_word):
         if letter == secret_word[i]:
-            result["correct_letters"].append((i, letter))
+            result["word"] += "!" + letter  # correct
         elif letter in secret_word:
-            result["misplaced_letters"].append((i, letter))
+            result["word"] += "?" + letter  # misplaced
         else:
-            result["incorrect_letters"].append((i, letter))
+            result["word"] += "." + letter  # wrong
 
     return result
+
+
+async def index_handler(request: Request):
+    return FileResponse(
+        Path(__file__).parents[2].resolve() / "frontend/wordle-app/dist/index.html"
+    )
 
 
 async def guess(request: Request):
@@ -73,14 +123,18 @@ async def guess(request: Request):
     if not data or not validate_telegram_data(data.get("_auth")):
         return json_response({"ok": False, "err": "Unauthorized"}, status=401)
 
-    session_pool = request.app["session_pool"]
     bot = request.app["bot"]
     config = request.app["config"]
+    redis: Redis = request.app["redis"]
+    session_pool = request.app["session_pool"]
 
-    guess_word: str | None = data.get("word")
     telegram_data = parse_init_data(data.get("_auth"))
     user = json.loads(telegram_data.get("user"))
-    user_id = user.get("id")
+    user_id = int(user.get("id"))
+    if (user_attemps := await get_user_attempts(redis, user_id)) > 5:
+        return json_response({"ok": False, "err": "Too many attempts"})
+
+    guess_word: str | None = data.get("word")
 
     if not guess_word:
         return json_response({"ok": False, "err": "Word is not provided"})
@@ -91,26 +145,32 @@ async def guess(request: Request):
     if len(guess_word) != 5:
         return json_response({"ok": False, "err": "Word length isn't 5"})
 
-    common_words = await get_common_words()
-    if guess_word.upper() not in common_words:
+    if guess_word.lower() not in other_words:
         return json_response(
             {
                 "ok": True,
-                "is_common": False,
-                "correct_letters": [],
-                "misplaced_letters": [],
-                "incorrect_letters": [],
                 "is_correct": False,
+                "is_common": False,
+                "word": "",
             }
         )
 
-    secret_word = await get_secret_word()
+    secret_word = await get_secret_word(redis)
+    logging.info(secret_word)
     result = check_word(guess_word, secret_word)
 
     if result["is_correct"] is True:
+        # If user guessed correctly before their attempts run out (a.k.a attempts > 5) we should increase
+        # the number of attempts so user can't send requests no more.
+        # 5 - covers all posible attempts, including when the user guessed correctly on the first time
+        # Although it tempting to place 6 here, remember that we add +1 later in this code (right after this block)
+        await add_user_attempt(redis, user_id, 5)
         async with session_pool() as session:
             repo = RequestsRepo(session)
-            win_amount = 10
+            # Of cource our changes doesn't affect win amount
+            # because "user_attempts" contains (already) outdated number of attempts that we've got from get_user_attempts.
+            # Since we ain't overriding it with new call, it save to calculate win amount with it
+            win_amount = win_amounts[user_attemps]
             current_balance = await get_user_balance(user_id, repo)
             new_balance = current_balance + win_amount
             await update_user_balance(user_id, new_balance, repo)
@@ -137,7 +197,7 @@ async def guess(request: Request):
                     inline_keyboard=[
                         [
                             InlineKeyboardButton(
-                                text="Зіграти у Вордлі 💡",
+                                text="💡 Зіграти теж",
                                 url=url,
                             )
                         ]
@@ -147,14 +207,23 @@ async def guess(request: Request):
         except Exception as e:
             logging.error(f"Error sending message: {e}")
 
+    await add_user_attempt(redis, user_id)
+
+    logging.info(
+        {
+            "ok": True,
+            "is_correct": result["is_correct"],
+            "is_common": True,
+            "word": result["word"],
+        }
+    )
+
     return json_response(
         {
             "ok": True,
-            "is_common": True,
-            "correct_letters": result["correct_letters"],
-            "misplaced_letters": result["misplaced_letters"],
-            "incorrect_letters": result["incorrect_letters"],
             "is_correct": result["is_correct"],
+            "is_common": True,
+            "word": result["word"],
         }
     )
 
