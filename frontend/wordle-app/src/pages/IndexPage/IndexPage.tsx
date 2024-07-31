@@ -1,36 +1,168 @@
-import { useLaunchParams } from "@telegram-apps/sdk-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useCloudStorage, useLaunchParams } from "@telegram-apps/sdk-react";
+import { Keyboard } from "@/components/Keyboard";
+import { WordleBoard } from "@/components/WordleBoard";
 
 // Define the structure of the API response
 interface GuessResponse {
   ok: boolean;
-  result: string;
-  correct_letters: [number, string][];
-  misplaced_letters: [number, string][];
-  incorrect_letters: [number, string][];
   is_correct: boolean;
+  is_common: boolean;
+  word: string;
+}
+
+// Define the structure of the cloud storage data
+interface CloudData {
+  date: string;
+  attempts: string[];
 }
 
 export const IndexPage: React.FC = () => {
   const initDataRaw = useLaunchParams().initDataRaw;
+  const cloudStorage = useCloudStorage();
 
   // State variables
-  const [guess, setGuess] = useState<string>("");
+  const [currentGuess, setCurrentGuess] = useState<string>("");
   const [guesses, setGuesses] = useState<string[]>([]);
-  const [feedback, setFeedback] = useState<GuessResponse | null>(null);
+  const [statuses, setStatuses] = useState<
+    ("correct" | "misplaced" | "incorrect" | "unused")[][]
+  >([]);
+  const [letterStatuses, setLetterStatuses] = useState<{
+    [key: string]: "correct" | "misplaced" | "incorrect" | "unused";
+  }>({});
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const [shake, setShake] = useState<boolean>(false);
+
+  useEffect(() => {
+    getTodayKey();
+  }, []);
+
+  // Function to get today's key from cloud storage
+  const getTodayKey = async () => {
+    try {
+      const result = await cloudStorage.get("Today");
+      if (result) {
+        const parsedData: CloudData = JSON.parse(result);
+        const storedDate = new Date(parsedData.date);
+        const currentDate = new Date();
+
+        // Check if the stored date is from yesterday or earlier
+        if (
+          storedDate.getDate() < currentDate.getDate() ||
+          storedDate.getMonth() < currentDate.getMonth() ||
+          storedDate.getFullYear() < currentDate.getFullYear()
+        ) {
+          await deleteTodayKey();
+        } else {
+          setGuesses(parsedData.attempts);
+          updateGameState(parsedData.attempts);
+        }
+      }
+    } catch (error) {
+      console.error("Error getting today's key:", error);
+    }
+  };
+
+  // Function to set today's key in cloud storage
+  const setTodayKey = async (newAttempts: string[]) => {
+    try {
+      const newCloudData: CloudData = {
+        date: new Date().toISOString(),
+        attempts: newAttempts,
+      };
+      await cloudStorage.set("Today", JSON.stringify(newCloudData));
+    } catch (error) {
+      console.error("Error setting today's key:", error);
+    }
+  };
+
+  // Function to delete today's key from cloud storage
+  const deleteTodayKey = async () => {
+    try {
+      await cloudStorage.delete("Today");
+      setGuesses([]);
+      setStatuses([]);
+      setLetterStatuses({});
+      setGameOver(false);
+    } catch (error) {
+      console.error("Error deleting today's key:", error);
+    }
+  };
+
+  // Function to update the game state based on guesses
+  const updateGameState = (attempts: string[]) => {
+    const newStatuses: ("correct" | "misplaced" | "incorrect" | "unused")[][] =
+      [];
+    const newLetterStatuses: {
+      [key: string]: "correct" | "misplaced" | "incorrect" | "unused";
+    } = {};
+
+    attempts.forEach((attempt) => {
+      const rowStatus: ("correct" | "misplaced" | "incorrect" | "unused")[] =
+        [];
+      attempt.split("").forEach((char, index) => {
+        if (index % 2 === 0) {
+          switch (char) {
+            case "!":
+              rowStatus.push("correct");
+              newLetterStatuses[attempt[index + 1]] = "correct";
+              break;
+            case "?":
+              rowStatus.push("misplaced");
+              if (newLetterStatuses[attempt[index + 1]] !== "correct") {
+                newLetterStatuses[attempt[index + 1]] = "misplaced";
+              }
+              break;
+            default:
+              rowStatus.push("incorrect");
+              if (!newLetterStatuses[attempt[index + 1]]) {
+                newLetterStatuses[attempt[index + 1]] = "incorrect";
+              }
+          }
+        }
+      });
+      newStatuses.push(rowStatus);
+    });
+
+    setStatuses(newStatuses);
+    setLetterStatuses(newLetterStatuses);
+
+    if (attempts.length > 0) {
+      const lastAttempt = attempts[attempts.length - 1];
+      if (
+        lastAttempt
+          .split("")
+          .filter((_, i) => i % 2 === 0)
+          .every((char) => char === "!")
+      ) {
+        setGameOver(true);
+      } else if (attempts.length >= 6) {
+        setGameOver(true);
+      }
+    }
+  };
+
+  // Function to handle key press on the virtual keyboard
+  const handleKeyPress = (key: string) => {
+    if (gameOver) return;
+
+    if (key === "BACKSPACE") {
+      setCurrentGuess((prev) => prev.slice(0, -1));
+    } else if (key === "ENTER") {
+      if (currentGuess.length === 5) {
+        submitGuess();
+      }
+    } else if (currentGuess.length < 5) {
+      setCurrentGuess((prev) => prev + key.toLowerCase());
+    }
+  };
 
   // Function to submit a guess
   const submitGuess = async () => {
-    if (guess.length !== 5) {
-      alert("Please enter a 5-letter word.");
-      return;
-    }
-
     try {
       const formData = new URLSearchParams();
       formData.append("_auth", initDataRaw ? initDataRaw : "");
-      formData.append("word", guess);
+      formData.append("word", currentGuess);
 
       const response = await fetch("/wordle/guess", {
         method: "POST",
@@ -44,12 +176,24 @@ export const IndexPage: React.FC = () => {
       const data: GuessResponse = await response.json();
 
       if (data.ok) {
-        setFeedback(data);
-        setGuesses([...guesses, guess]);
-        setGuess("");
+        if (data.is_common) {
+          const formattedGuess = data.word;
+          console.log(formattedGuess);
+          const newGuesses = [...guesses, formattedGuess];
+          setGuesses(newGuesses);
+          setCurrentGuess("");
+          setTodayKey(newGuesses);
+          updateGameState(newGuesses);
 
-        if (data.is_correct) {
-          setGameOver(true);
+          if (data.is_correct) {
+            setGameOver(true);
+          } else if (newGuesses.length >= 6) {
+            setGameOver(true);
+          }
+        } else {
+          // Word is not common, shake the current guess
+          setShake(true);
+          setTimeout(() => setShake(false), 500);
         }
       } else {
         alert("Error submitting guess. Please try again.");
@@ -60,87 +204,38 @@ export const IndexPage: React.FC = () => {
     }
   };
 
-  // Function to render a single guess with color-coded feedback
-  const renderGuess = (guessWord: string, index: number) => {
-    return (
-      <div key={index} className="flex mb-2">
-        {guessWord.split("").map((letter, letterIndex) => {
-          let backgroundColor = "bg-gray-300"; // Default color for incorrect letters
-
-          if (feedback && guesses[guesses.length - 1] === guessWord) {
-            if (feedback.correct_letters.some(([i, _]) => i === letterIndex)) {
-              backgroundColor = "bg-green-500";
-            } else if (
-              feedback.misplaced_letters.some(([i, _]) => i === letterIndex)
-            ) {
-              backgroundColor = "bg-yellow-500";
-            }
-          }
-
-          return (
-            <div
-              key={letterIndex}
-              className={`w-10 h-10 flex items-center justify-center font-bold text-black ${backgroundColor} mr-1`}
-            >
-              {letter.toUpperCase()}
-            </div>
-          );
-        })}
-      </div>
-    );
+  // Function to convert formatted guess to display guess
+  const convertToDisplayGuess = (formattedGuess: string) => {
+    return formattedGuess.replace(/[!?.]/g, "");
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-4xl font-bold mb-8">Wordle Game</h1>
 
-      {/* Display previous guesses */}
-      <div className="mb-4">
-        {guesses.map((guessWord, index) => renderGuess(guessWord, index))}
-      </div>
-
-      {/* Input for new guess */}
-      <div className="mb-4">
-        <input
-          type="text"
-          value={guess}
-          onChange={(e) => setGuess(e.target.value.toLowerCase())}
-          maxLength={5}
-          className="border-2 border-gray-300 rounded px-4 py-2 mr-2"
-          placeholder="Enter 5-letter word"
-          disabled={gameOver}
+      <div className={`mb-4 ${shake ? "animate-shake" : ""}`}>
+        <WordleBoard
+          guesses={[...guesses.map(convertToDisplayGuess), currentGuess]}
+          statuses={statuses}
         />
-        <button
-          onClick={submitGuess}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          disabled={gameOver}
-        >
-          Guess
-        </button>
       </div>
 
-      {/* Feedback message */}
-      {feedback && (
-        <div className="mt-4">
-          {feedback.result === "NotCommon" ? (
-            <p className="text-red-500">Word is not in the list. Try again.</p>
-          ) : feedback.is_correct ? (
-            <p className="text-green-500">
-              Congratulations! You guessed the word!
-            </p>
-          ) : (
-            <p className="text-blue-500">Good try! Keep guessing.</p>
-          )}
-        </div>
-      )}
+      <Keyboard onKeyPress={handleKeyPress} letterStatuses={letterStatuses} />
 
-      {/* Game over message */}
       {gameOver && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold">Game Over!</h2>
           <p>You guessed the word in {guesses.length} tries.</p>
         </div>
       )}
+
+      <button
+        onClick={() => {
+          deleteTodayKey();
+        }}
+      >
+        For development
+      </button>
     </div>
   );
 };
