@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useCloudStorage,
   useHapticFeedback,
@@ -39,6 +39,7 @@ export const IndexPage: React.FC = () => {
   }>({});
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [shake, setShake] = useState<boolean>(false);
+  const playerRef = useRef<Player>(null);
 
   // Function to get today's key from cloud storage
   const getTodayKey = async () => {
@@ -221,8 +222,15 @@ export const IndexPage: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-between min-h-screen bg-theme-bg-color">
       <div className="w-full">
-        <div className="w-16 h-16 mx-auto mt-4">
-          <Player src={UAflag} autoplay loop={false} />
+        <div
+          className="w-16 h-16 mx-auto mb-4"
+          onClick={() => {
+            if (playerRef.current) {
+              playerRef.current.play();
+            }
+          }}
+        >
+          <Player src={UAflag} ref={playerRef} autoplay loop={false} />
         </div>
       </div>
 
