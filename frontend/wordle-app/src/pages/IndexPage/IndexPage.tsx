@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useCloudStorage, useLaunchParams } from "@telegram-apps/sdk-react";
+import {
+  useCloudStorage,
+  useHapticFeedback,
+  useLaunchParams,
+} from "@telegram-apps/sdk-react";
 import { Keyboard } from "@/components/Keyboard";
 import { WordleBoard } from "@/components/WordleBoard";
 
@@ -20,6 +24,7 @@ interface CloudData {
 export const IndexPage: React.FC = () => {
   const initDataRaw = useLaunchParams().initDataRaw;
   const cloudStorage = useCloudStorage();
+  const hapticFeedback = useHapticFeedback();
 
   // State variables
   const [currentGuess, setCurrentGuess] = useState<string>("");
@@ -32,10 +37,6 @@ export const IndexPage: React.FC = () => {
   }>({});
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [shake, setShake] = useState<boolean>(false);
-
-  useEffect(() => {
-    getTodayKey();
-  }, []);
 
   // Function to get today's key from cloud storage
   const getTodayKey = async () => {
@@ -208,6 +209,22 @@ export const IndexPage: React.FC = () => {
   const convertToDisplayGuess = (formattedGuess: string) => {
     return formattedGuess.replace(/[!?.]/g, "");
   };
+
+  useEffect(() => {
+    getTodayKey();
+  }, []);
+
+  useEffect(() => {
+    if (shake) {
+      hapticFeedback.impactOccurred("medium");
+    }
+  }, [shake]);
+
+  useEffect(() => {
+    if (gameOver) {
+      hapticFeedback.notificationOccurred("success");
+    }
+  }, [gameOver]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
