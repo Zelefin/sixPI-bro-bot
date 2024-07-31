@@ -6,6 +6,8 @@ import {
 } from "@telegram-apps/sdk-react";
 import { Keyboard } from "@/components/Keyboard";
 import { WordleBoard } from "@/components/WordleBoard";
+import { Player } from "@lottiefiles/react-lottie-player";
+import UAflag from "./UAflag.json";
 
 // Define the structure of the API response
 interface GuessResponse {
@@ -188,13 +190,15 @@ export const IndexPage: React.FC = () => {
 
           if (data.is_correct) {
             setGameOver(true);
+            hapticFeedback.notificationOccurred("success");
           } else if (newGuesses.length >= 6) {
             setGameOver(true);
           }
         } else {
-          // Word is not common, shake the current guess
+          // Word is not common, shake the current guess row
           setShake(true);
           setTimeout(() => setShake(false), 500);
+          hapticFeedback.impactOccurred("medium");
         }
       } else {
         alert("Error submitting guess. Please try again.");
@@ -214,45 +218,42 @@ export const IndexPage: React.FC = () => {
     getTodayKey();
   }, []);
 
-  useEffect(() => {
-    if (shake) {
-      hapticFeedback.impactOccurred("medium");
-    }
-  }, [shake]);
-
-  useEffect(() => {
-    if (gameOver) {
-      hapticFeedback.notificationOccurred("success");
-    }
-  }, [gameOver]);
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-8">Wordle Game</h1>
+    <div className="flex flex-col items-center justify-between min-h-screen bg-theme-bg-color">
+      <div className="w-full">
+        <div className="w-16 h-16 mx-auto mt-4">
+          <Player src={UAflag} autoplay loop={false} />
+        </div>
+      </div>
 
-      <div className={`mb-4 ${shake ? "animate-shake" : ""}`}>
+      <div className="flex-grow flex items-center justify-center w-full">
         <WordleBoard
           guesses={[...guesses.map(convertToDisplayGuess), currentGuess]}
           statuses={statuses}
+          currentGuessIndex={guesses.length}
+          shake={shake}
         />
       </div>
 
-      <Keyboard onKeyPress={handleKeyPress} letterStatuses={letterStatuses} />
+      <div className="w-full mb-4">
+        <Keyboard onKeyPress={handleKeyPress} letterStatuses={letterStatuses} />
 
-      {gameOver && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold">Game Over!</h2>
-          <p>You guessed the word in {guesses.length} tries.</p>
-        </div>
-      )}
+        {gameOver && (
+          <div className="mt-8 text-center text-text-color">
+            <h2 className="text-2xl font-bold">Game Over!</h2>
+            <p>You guessed the word in {guesses.length} tries.</p>
+          </div>
+        )}
 
-      <button
-        onClick={() => {
-          deleteTodayKey();
-        }}
-      >
-        For development
-      </button>
+        <button
+          onClick={() => {
+            deleteTodayKey();
+          }}
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded block mx-auto"
+        >
+          Reset Game (For development)
+        </button>
+      </div>
     </div>
   );
 };

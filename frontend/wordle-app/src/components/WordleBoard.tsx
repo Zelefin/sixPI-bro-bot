@@ -3,35 +3,44 @@ import React from "react";
 interface WordleRowProps {
   word: string;
   statuses: ("correct" | "misplaced" | "incorrect" | "unused")[];
+  shake: boolean;
 }
 
-export const WordleRow: React.FC<WordleRowProps> = ({ word, statuses }) => {
+export const WordleRow: React.FC<WordleRowProps> = ({
+  word,
+  statuses,
+  shake,
+}) => {
   // Function to determine the background color of a letter based on its status
   const getLetterColor = (
     status: "correct" | "misplaced" | "incorrect" | "unused"
   ) => {
     switch (status) {
       case "correct":
-        return "bg-green-500";
+        return "bg-correct-letter-color";
       case "misplaced":
-        return "bg-yellow-500";
+        return "bg-misplaced-letter-color";
       case "incorrect":
-        return "bg-gray-700";
+        return "bg-incorrect-letter-color";
       default:
-        return "bg-gray-200";
+        return "bg-white border-2 border-[#888888]";
     }
   };
 
   return (
-    <div className="flex mb-4 justify-center">
+    <div
+      className={`flex justify-center my-2 ${shake ? "animate-row-shake" : ""}`}
+    >
       {Array(5)
         .fill(null)
         .map((_, index) => (
           <div
             key={index}
-            className={`w-16 h-16 border-2 border-gray-300 flex items-center justify-center font-bold text-3xl ${getLetterColor(
+            className={`w-[16vw] h-[16vw] flex items-center justify-center font-bold text-4xl ${getLetterColor(
               statuses[index]
-            )} text-white mx-1.5 rounded-lg`}
+            )} ${
+              statuses[index] === "unused" ? "text-black" : "text-white"
+            } mx-1`}
           >
             {word[index]?.toUpperCase() || ""}
           </div>
@@ -43,14 +52,18 @@ export const WordleRow: React.FC<WordleRowProps> = ({ word, statuses }) => {
 interface WordleBoardProps {
   guesses: string[];
   statuses: ("correct" | "misplaced" | "incorrect" | "unused")[][];
+  currentGuessIndex: number;
+  shake: boolean;
 }
 
 export const WordleBoard: React.FC<WordleBoardProps> = ({
   guesses,
   statuses,
+  currentGuessIndex,
+  shake,
 }) => {
   return (
-    <div className="mb-6 w-full max-w-md mx-auto">
+    <div className="mb-6 w-full mx-auto">
       {Array(6)
         .fill(null)
         .map((_, index) => (
@@ -58,6 +71,7 @@ export const WordleBoard: React.FC<WordleBoardProps> = ({
             key={index}
             word={guesses[index] || ""}
             statuses={statuses[index] || Array(5).fill("unused")}
+            shake={shake && index === currentGuessIndex}
           />
         ))}
     </div>
