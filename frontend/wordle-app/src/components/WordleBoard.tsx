@@ -23,7 +23,7 @@ export const WordleRow: React.FC<WordleRowProps> = ({
       case "incorrect":
         return "bg-incorrect-letter-color";
       default:
-        return "bg-white border-2 border-[#888888]";
+        return "bg-theme-bg-color border-2 border-hint-color";
     }
   };
 
@@ -39,7 +39,7 @@ export const WordleRow: React.FC<WordleRowProps> = ({
             className={`w-[16vw] h-[16vw] flex items-center justify-center font-bold text-4xl ${getLetterColor(
               statuses[index]
             )} ${
-              statuses[index] === "unused" ? "text-black" : "text-white"
+              statuses[index] === "unused" ? "text-text-color" : "text-white"
             } mx-1`}
           >
             {word[index]?.toUpperCase() || ""}
