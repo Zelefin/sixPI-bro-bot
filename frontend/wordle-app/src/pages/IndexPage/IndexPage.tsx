@@ -4,10 +4,11 @@ import {
   useHapticFeedback,
   useLaunchParams,
 } from "@telegram-apps/sdk-react";
-import { Keyboard } from "@/components/Keyboard";
+import { WordleKeyboard } from "@/components/WordleKeyboard";
 import { WordleBoard } from "@/components/WordleBoard";
 import { Player } from "@lottiefiles/react-lottie-player";
 import UAflag from "./UAflag.json";
+import "@/components/wordleKeyboard.css";
 
 // Define the structure of the API response
 interface GuessResponse {
@@ -244,7 +245,10 @@ export const IndexPage: React.FC = () => {
       </div>
 
       <div className="w-full mb-4">
-        <Keyboard onKeyPress={handleKeyPress} letterStatuses={letterStatuses} />
+        <WordleKeyboard
+          onKeyPress={handleKeyPress}
+          letterStatuses={letterStatuses}
+        />
 
         {gameOver && (
           <div className="mt-8 text-center text-text-color">
