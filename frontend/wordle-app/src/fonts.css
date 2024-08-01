@@ -1,0 +1,11 @@
+@font-face {
+  font-family: "Inter Bold";
+  src: url("./assets/fonts/Inter-Bold.woff2") format("woff2");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: "Inter Bold", sans-serif;
+}
