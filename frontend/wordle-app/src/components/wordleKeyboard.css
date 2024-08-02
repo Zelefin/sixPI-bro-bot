@@ -1,3 +1,37 @@
 .simple-keyboard {
-  @apply bg-theme-bg-color;
+  @apply bg-transparent;
+}
+
+.simple-keyboard .hg-button {
+  @apply bg-default-light-letter-color text-black uppercase font-bold;
+}
+
+.dark .simple-keyboard .hg-button {
+  @apply bg-default-dark-letter-color text-white;
+}
+
+.simple-keyboard .hg-button.enter {
+  @apply bg-button-color text-white;
+}
+
+.simple-keyboard .hg-button.incorrect {
+  @apply bg-incorrect-letter-color text-white;
+}
+
+.simple-keyboard .hg-button.misplaced {
+  @apply bg-misplaced-letter-color text-white;
+}
+
+.simple-keyboard .hg-button.correct {
+  @apply bg-correct-letter-color text-white;
+}
+
+.simple-keyboard .hg-button:active,
+.simple-keyboard .hg-button.hg-activeButton {
+  @apply bg-clicked-default-light-letter-color text-black;
+}
+
+.dark .simple-keyboard .hg-button:active,
+.dark .simple-keyboard .hg-button.hg-activeButton {
+  @apply bg-clicked-default-dark-letter-color text-white;
 }

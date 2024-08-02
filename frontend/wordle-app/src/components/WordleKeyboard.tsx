@@ -1,7 +1,7 @@
-import { useMiniApp } from "@telegram-apps/sdk-react";
 import React, { useCallback, useEffect, useRef } from "react";
 import Keyboard from "react-simple-keyboard";
 import "react-simple-keyboard/build/css/index.css";
+import { useMiniApp } from "@telegram-apps/sdk-react";
 
 interface WordleKeyboardProps {
   onKeyPress: (key: string) => void;
@@ -12,11 +12,23 @@ interface WordleKeyboardProps {
 
 const keyboardLayout = {
   default: [
-    "Й Ц У К Е Н Г Ш Щ З Х Ї",
-    "Ф І В А П Р О Л Д Ж Є",
-    "{enter} Я Ч С М И Т Ь Б Ю {bksp}",
+    "й ц у к е н г ш щ з х ї",
+    "ф і в а п р о л д ж є",
+    "{enter} я ч с м и т ь б ю {bksp}",
   ],
 };
+
+const buttonTheme = [
+  {
+    class: "letter-button",
+    buttons:
+      "й ц у к е н г ш щ з х ї ф і в а п р о л д ж є я ч с м и т ь б ю {bksp}",
+  },
+  {
+    class: "enter",
+    buttons: "{enter}",
+  },
+];
 
 export const WordleKeyboard: React.FC<WordleKeyboardProps> = ({
   onKeyPress,
@@ -43,71 +55,35 @@ export const WordleKeyboard: React.FC<WordleKeyboardProps> = ({
       Object.entries(letterStatuses).forEach(([letter, status]) => {
         const buttonElement = keyboardRef.current.getButtonElement(letter);
         if (buttonElement) {
-          buttonElement.classList.remove(
-            "bg-correct-letter-color",
-            "bg-misplaced-letter-color",
-            "bg-incorrect-letter-color",
-            "text-white"
-          );
+          buttonElement.classList.remove("correct", "misplaced", "incorrect");
           if (status !== "unused") {
-            buttonElement.classList.add(
-              `!bg-${status}-letter-color`,
-              "text-white"
-            );
+            buttonElement.classList.add(status);
           }
         }
       });
     }
   }, [letterStatuses]);
 
-  const buttonTheme = [
-    {
-      class: `${
-        miniApp.isDark
-          ? "!bg-default-dark-letter-color active:!bg-clicked-default-dark-letter-color !text-white"
-          : "!bg-default-light-letter-color active:!bg-clicked-default-light-letter-color !text-black"
-      } text-white font-bold`,
-      buttons:
-        "Й Ц У К Е Н Г Ш Щ З Х Ї Ф І В А П Р О Л Д Ж Є Я Ч С М И Т Ь Б Ю",
-    },
-    {
-      class: `${
-        miniApp.isDark
-          ? "!bg-button-color active:!bg-clicked-default-dark-letter-color"
-          : "!bg-button-color active:!bg-clicked-default-light-letter-color active:!text-black"
-      } text-white font-bold`,
-      buttons: "{enter}",
-    },
-    {
-      class: `${
-        miniApp.isDark
-          ? "!bg-default-dark-letter-color active:!bg-clicked-default-dark-letter-color"
-          : "!bg-default-light-letter-color active:!bg-clicked-default-light-letter-color"
-      }`,
-      buttons: "{bksp}",
-    },
-  ];
-
   const backspaceIcon = `
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke-width="1"
-    stroke=${miniApp.isDark ? "white" : "black"}
-    class="w-7 h-7"
-  >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z"
-    ></path>
-  </svg>
-`;
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth="1"
+      stroke=${miniApp.isDark ? "white" : "black"}
+      class="w-7 h-7"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z"
+      />
+    </svg>
+  `;
 
   const display = {
     "{enter}": "ENTER",
-    "{bksp}": `${backspaceIcon}`,
+    "{bksp}": backspaceIcon,
   };
 
   return (
