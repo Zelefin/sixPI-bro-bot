@@ -221,30 +221,53 @@ export const IndexPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-screen bg-theme-bg-color">
-      <div className="w-full">
+    <div className="flex flex-col w-full flex-1 px-4 text-center min-h-screen items-center justify-between h-screen bg-theme-bg-color">
+      <header className="flex flex-nowrap items-center justify-between max-w-4xl w-screen">
+        <div className="p-4 text-lg font-bold basis-1/4 flex flex-row items-center justify-center gap-y-0">
+          <h1 className="text-text-color">
+            <div>Day</div>
+            <div>#286</div>
+          </h1>
+        </div>
         <div
-          className="w-16 h-16 mx-auto mb-4"
+          className="p-4 text-2xl font-bold basis-1/2 center align-middle flex flex-row items-center justify-center gap-2"
           onClick={() => {
             if (playerRef.current) {
               playerRef.current.play();
             }
           }}
         >
-          <Player src={UAflag} ref={playerRef} autoplay loop={false} />
+          <div className="w-16 h-16">
+            <Player src={UAflag} ref={playerRef} autoplay loop={false} />
+          </div>
         </div>
-      </div>
+        <div className="p-4 text-2xl font-bold text-hint-color basis-1/4 flex flex-row items-center justify-end gap-2">
+          <button className="w-8 h-8">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+              className="w-8 h-8"
+            >
+              <path
+                fillRule="evenodd"
+                d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 01-.988-1.129c1.454-1.272 3.776-1.272 5.23 0 1.513 1.324 1.513 3.518 0 4.842a3.75 3.75 0 01-.837.552c-.676.328-1.028.774-1.028 1.152v.75a.75.75 0 01-1.5 0v-.75c0-1.279 1.06-2.107 1.875-2.502.182-.088.351-.199.503-.331.83-.727.83-1.857 0-2.584zM12 18a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                clipRule="evenodd"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </header>
 
-      <div className="flex-grow flex items-center justify-center w-full">
-        <WordleBoard
-          guesses={[...guesses.map(convertToDisplayGuess), currentGuess]}
-          statuses={statuses}
-          currentGuessIndex={guesses.length}
-          shake={shake}
-        />
-      </div>
+      <WordleBoard
+        guesses={[...guesses.map(convertToDisplayGuess), currentGuess]}
+        statuses={statuses}
+        currentGuessIndex={guesses.length}
+        shake={shake}
+      />
 
-      <div className="w-full mb-4">
+      <div className="flex flex-wrap items-center justify-around max-w-4xl mt-6 w-screen z-10">
         <WordleKeyboard
           onKeyPress={handleKeyPress}
           letterStatuses={letterStatuses}
