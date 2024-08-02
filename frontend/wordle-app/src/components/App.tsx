@@ -22,6 +22,8 @@ export const App: FC = () => {
   const viewport = useViewport();
 
   useEffect(() => {
+    miniApp.setHeaderColor(miniApp.bgColor);
+    miniApp.setBgColor(miniApp.bgColor);
     return bindMiniAppCSSVars(miniApp, themeParams);
   }, [miniApp, themeParams]);
 
