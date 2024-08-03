@@ -5,9 +5,11 @@ export interface GuessResponse {
   is_correct: boolean;
   is_common: boolean;
   word: string;
+  correct_word?: string;
 }
 
 export interface CloudData {
   date: string;
   attempts: string[];
+  correctWord: string;
 }

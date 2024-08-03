@@ -5,19 +5,8 @@ import { WordleKeyboard } from "@/components/WordleKeyboard";
 interface FooterProps {
   handleKeyPress: (key: string) => void;
   letterStatuses: Record<string, LetterStatus>;
-  gameOver: boolean;
-  guessesLength: number;
   deleteTodayKey: () => Promise<void>;
 }
-
-const GameOverMessage: React.FC<{ guessesLength: number }> = ({
-  guessesLength,
-}) => (
-  <div className="mt-8 text-center text-text-color">
-    <h2 className="text-2xl font-bold">Game Over!</h2>
-    <p>You guessed the word in {guessesLength} tries.</p>
-  </div>
-);
 
 const ResetButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
@@ -31,8 +20,6 @@ const ResetButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
 export const Footer: React.FC<FooterProps> = ({
   handleKeyPress,
   letterStatuses,
-  gameOver,
-  guessesLength,
   deleteTodayKey,
 }) => (
   <div className="flex flex-wrap items-center justify-around max-w-4xl mt-6 w-screen z-10">
@@ -40,7 +27,6 @@ export const Footer: React.FC<FooterProps> = ({
       onKeyPress={handleKeyPress}
       letterStatuses={letterStatuses}
     />
-    {gameOver && <GameOverMessage guessesLength={guessesLength} />}
     <ResetButton onClick={deleteTodayKey} />
   </div>
 );

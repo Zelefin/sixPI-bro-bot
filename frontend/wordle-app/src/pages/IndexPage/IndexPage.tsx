@@ -8,6 +8,7 @@ import { WordleBoard } from "@/components/WordleBoard";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useTheme } from "@/components/ThemeContext";
+import { GameOverPopup } from "@/components/GameOverPopup";
 import "@/components/wordleKeyboard.css";
 import { LetterStatus, CloudData, GuessResponse } from "@/types";
 
@@ -19,13 +20,17 @@ export const IndexPage: React.FC = () => {
 
   // State
   const [currentGuess, setCurrentGuess] = useState<string>("");
+  const [correctWord, setCorrectWord] = useState<string>("err");
   const [guesses, setGuesses] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<LetterStatus[][]>([]);
   const [letterStatuses, setLetterStatuses] = useState<
     Record<string, LetterStatus>
   >({});
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const [hasWon, setHasWon] = useState<boolean>(false);
   const [shake, setShake] = useState<boolean>(false);
+  const [isGameOverPopupOpen, setIsGameOverPopupOpen] =
+    useState<boolean>(false);
 
   // Cloud storage operations
   const getTodayKey = useCallback(async () => {
@@ -39,6 +44,7 @@ export const IndexPage: React.FC = () => {
         if (isYesterdayOrEarlier(storedDate, currentDate)) {
           await deleteTodayKey();
         } else {
+          setCorrectWord(parsedData.correctWord);
           setGuesses(parsedData.attempts);
           updateGameState(parsedData.attempts);
         }
@@ -49,11 +55,12 @@ export const IndexPage: React.FC = () => {
   }, [cloudStorage]);
 
   const setTodayKey = useCallback(
-    async (newAttempts: string[]) => {
+    async (newAttempts: string[], cWord: string) => {
       try {
         const newCloudData: CloudData = {
           date: new Date().toISOString(),
           attempts: newAttempts,
+          correctWord: cWord,
         };
         await cloudStorage.set("Today", JSON.stringify(newCloudData));
       } catch (error) {
@@ -191,8 +198,12 @@ export const IndexPage: React.FC = () => {
           .every((char) => char === "!")
       ) {
         setGameOver(true);
+        setHasWon(true);
+        setIsGameOverPopupOpen(true);
       } else if (attempts.length >= 6) {
         setGameOver(true);
+        setHasWon(false);
+        setIsGameOverPopupOpen(true);
       }
     }
   };
@@ -203,20 +214,44 @@ export const IndexPage: React.FC = () => {
       const newGuesses = [...guesses, formattedGuess];
       setGuesses(newGuesses);
       setCurrentGuess("");
-      setTodayKey(newGuesses);
+      // Correct word will be only avaliable if
+      // user have sent exactly 6 requests to /guess.
+      if (data.correct_word) {
+        setCorrectWord(data.correct_word);
+      }
       updateGameState(newGuesses);
 
       if (data.is_correct) {
         setGameOver(true);
+        setHasWon(true);
+        // But we still need to set it.
+        // User can guess the word in less than 6 requests.
+        setCorrectWord(convertToDisplayGuess(data.word));
+        setIsGameOverPopupOpen(true);
         hapticFeedback.notificationOccurred("success");
       } else if (newGuesses.length >= 6) {
         setGameOver(true);
+        setHasWon(false);
+        setIsGameOverPopupOpen(true);
       }
+
+      setTodayKey(
+        newGuesses,
+        data.correct_word
+          ? data.correct_word
+          : data.is_correct
+          ? convertToDisplayGuess(data.word)
+          : "_err"
+      );
     } else {
       setShake(true);
       setTimeout(() => setShake(false), 500);
       hapticFeedback.impactOccurred("medium");
     }
+  };
+
+  const closeGameOverPopup = () => {
+    setIsGameOverPopupOpen(false);
   };
 
   const convertToDisplayGuess = (formattedGuess: string) => {
@@ -243,9 +278,15 @@ export const IndexPage: React.FC = () => {
       <Footer
         handleKeyPress={handleKeyPress}
         letterStatuses={letterStatuses}
-        gameOver={gameOver}
-        guessesLength={guesses.length}
         deleteTodayKey={deleteTodayKey}
+      />
+      <GameOverPopup
+        isOpen={isGameOverPopupOpen}
+        onClose={closeGameOverPopup}
+        hasWon={hasWon}
+        guessCount={guesses.length}
+        correctWord={correctWord}
+        guesses={guesses}
       />
     </div>
   );

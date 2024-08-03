@@ -8,6 +8,7 @@ export default {
         "secondary-bg-color": "var(--tg-theme-secondary-bg-color)",
         "theme-bg-color": "var(--tg-theme-bg-color)",
         "button-color": "var(--tg-theme-button-color)",
+        "button-text-color": "var(--tg-theme-button-text-color)",
         "text-color": "var(--tg-theme-text-color)",
         "hint-color": "var(--tg-theme-hint-color)",
         "section-header-text-color": "var(--tg-theme-section-header-text-color)",
