@@ -1,13 +1,12 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useMemo } from "react";
 import Keyboard from "react-simple-keyboard";
 import "react-simple-keyboard/build/css/index.css";
-import { useMiniApp } from "@telegram-apps/sdk-react";
+import { useTheme } from "./ThemeContext";
+import { LetterStatus } from "@/types";
 
 interface WordleKeyboardProps {
   onKeyPress: (key: string) => void;
-  letterStatuses: {
-    [key: string]: "correct" | "misplaced" | "incorrect" | "unused";
-  };
+  letterStatuses: Record<string, LetterStatus>;
 }
 
 const keyboardLayout = {
@@ -18,24 +17,11 @@ const keyboardLayout = {
   ],
 };
 
-const buttonTheme = [
-  {
-    class: "letter-button",
-    buttons:
-      "й ц у к е н г ш щ з х ї ф і в а п р о л д ж є я ч с м и т ь б ю {bksp}",
-  },
-  {
-    class: "enter",
-    buttons: "{enter}",
-  },
-];
-
 export const WordleKeyboard: React.FC<WordleKeyboardProps> = ({
   onKeyPress,
   letterStatuses,
 }) => {
-  const keyboardRef = useRef<any>(null);
-  const miniApp = useMiniApp();
+  const { theme } = useTheme();
 
   const handleKeyPress = useCallback(
     (button: string) => {
@@ -50,18 +36,33 @@ export const WordleKeyboard: React.FC<WordleKeyboardProps> = ({
     [onKeyPress]
   );
 
-  useEffect(() => {
-    if (keyboardRef.current) {
-      Object.entries(letterStatuses).forEach(([letter, status]) => {
-        const buttonElement = keyboardRef.current.getButtonElement(letter);
-        if (buttonElement) {
-          buttonElement.classList.remove("correct", "misplaced", "incorrect");
-          if (status !== "unused") {
-            buttonElement.classList.add(status);
-          }
-        }
-      });
-    }
+  const buttonTheme = useMemo(() => {
+    const theme = [
+      {
+        class: "letter-button",
+        buttons:
+          "й ц у к е н г ш щ з х ї ф і в а п р о л д ж є я ч с м и т ь б ю",
+      },
+      {
+        class: "enter",
+        buttons: "{enter}",
+      },
+      {
+        class: "backspace",
+        buttons: "{bksp}",
+      },
+    ];
+
+    Object.entries(letterStatuses).forEach(([letter, status]) => {
+      if (status !== "unused") {
+        theme.push({
+          class: status,
+          buttons: letter,
+        });
+      }
+    });
+
+    return theme;
   }, [letterStatuses]);
 
   const backspaceIcon = `
@@ -70,7 +71,7 @@ export const WordleKeyboard: React.FC<WordleKeyboardProps> = ({
       fill="none"
       viewBox="0 0 24 24"
       strokeWidth="1"
-      stroke=${miniApp.isDark ? "white" : "black"}
+      stroke=${theme === "dark" ? "white" : "black"}
       class="w-7 h-7"
     >
       <path
@@ -88,7 +89,6 @@ export const WordleKeyboard: React.FC<WordleKeyboardProps> = ({
 
   return (
     <Keyboard
-      keyboardRef={(r) => (keyboardRef.current = r)}
       layout={keyboardLayout}
       onKeyPress={handleKeyPress}
       display={display}

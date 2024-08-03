@@ -3,15 +3,15 @@
 }
 
 .simple-keyboard .hg-button {
-  @apply bg-default-light-letter-color text-black uppercase font-bold;
-}
-
-.dark .simple-keyboard .hg-button {
-  @apply bg-default-dark-letter-color text-white;
+  @apply bg-default-light-letter-color dark:bg-default-dark-letter-color text-black dark:text-white uppercase font-bold;
 }
 
 .simple-keyboard .hg-button.enter {
   @apply bg-button-color text-white;
+}
+
+.simple-keyboard .hg-button.backspace {
+  @apply bg-default-light-letter-color dark:bg-default-dark-letter-color;
 }
 
 .simple-keyboard .hg-button.incorrect {
@@ -28,10 +28,5 @@
 
 .simple-keyboard .hg-button:active,
 .simple-keyboard .hg-button.hg-activeButton {
-  @apply bg-clicked-default-light-letter-color text-black;
-}
-
-.dark .simple-keyboard .hg-button:active,
-.dark .simple-keyboard .hg-button.hg-activeButton {
-  @apply bg-clicked-default-dark-letter-color text-white;
+  @apply bg-clicked-default-light-letter-color dark:bg-clicked-default-dark-letter-color text-black dark:text-white;
 }

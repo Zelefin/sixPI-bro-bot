@@ -14,6 +14,7 @@ import { type FC, useEffect, useMemo } from "react";
 import { Navigate, Route, Router, Routes } from "react-router-dom";
 
 import { routes } from "@/navigation/routes.tsx";
+import { ThemeProvider } from "@/components/ThemeContext";
 
 export const App: FC = () => {
   const lp = useLaunchParams();
@@ -35,10 +36,6 @@ export const App: FC = () => {
     return viewport && bindViewportCSSVars(viewport);
   }, [viewport]);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", miniApp.isDark);
-  }, [miniApp.isDark]);
-
   // Create a new application navigator and attach it to the browser history, so it could modify
   // it and listen to its changes.
   const navigator = useMemo(() => initNavigator("app-navigation-state"), []);
@@ -52,18 +49,20 @@ export const App: FC = () => {
   }, [navigator]);
 
   return (
-    <AppRoot
-      appearance={miniApp.isDark ? "dark" : "light"}
-      platform={["macos", "ios"].includes(lp.platform) ? "ios" : "base"}
-    >
-      <Router location={location} navigator={reactNavigator}>
-        <Routes>
-          {routes.map((route) => (
-            <Route key={route.path} {...route} />
-          ))}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </Router>
-    </AppRoot>
+    <ThemeProvider>
+      <AppRoot
+        appearance={miniApp.isDark ? "dark" : "light"}
+        platform={["macos", "ios"].includes(lp.platform) ? "ios" : "base"}
+      >
+        <Router location={location} navigator={reactNavigator}>
+          <Routes>
+            {routes.map((route) => (
+              <Route key={route.path} {...route} />
+            ))}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Router>
+      </AppRoot>
+    </ThemeProvider>
   );
 };

@@ -23,7 +23,7 @@ export default defineConfig({
     host: true,
     // For development
     proxy: {
-      '/guess': {
+      '/wordle/guess': {
         target: 'http://127.0.0.1:8080/',
         changeOrigin: true,
         secure: false,
