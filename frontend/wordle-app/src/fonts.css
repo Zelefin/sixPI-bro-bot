@@ -1,11 +1,10 @@
 @font-face {
-  font-family: "Inter Bold";
-  src: url("./assets/fonts/Inter-Bold.woff2") format("woff2");
-  font-weight: bold;
+  font-family: "Inter";
+  src: url("./assets/fonts/InterVariable.woff2") format("woff2");
   font-style: normal;
   font-display: swap;
 }
 
 body {
-  font-family: "Inter Bold", sans-serif;
+  font-family: "Inter", sans-serif;
 }

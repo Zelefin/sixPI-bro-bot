@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Player } from "@lottiefiles/react-lottie-player";
 import UAflag from "./UAflag.json";
+import { HowToPlayPopup } from "./HowToPlayPopup";
 
 const DayCounter: React.FC = () => (
   <div className="p-4 text-lg font-bold basis-1/4 flex flex-row items-center justify-center gap-y-0">
@@ -26,9 +27,9 @@ const FlagAnimation: React.FC = () => {
   );
 };
 
-const HelpButton: React.FC = () => (
+const HelpButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <div className="p-4 text-2xl font-bold text-hint-color basis-1/4 flex flex-row items-center justify-end gap-2">
-    <button className="w-8 h-8">
+    <button className="w-8 h-8" onClick={onClick}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -46,10 +47,20 @@ const HelpButton: React.FC = () => (
   </div>
 );
 
-export const Header: React.FC = () => (
-  <header className="flex flex-nowrap items-center justify-between max-w-4xl w-screen">
-    <DayCounter />
-    <FlagAnimation />
-    <HelpButton />
-  </header>
-);
+export const Header: React.FC = () => {
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
+
+  const openHowToPlay = () => setIsHowToPlayOpen(true);
+  const closeHowToPlay = () => setIsHowToPlayOpen(false);
+
+  return (
+    <>
+      <header className="flex flex-nowrap items-center justify-between max-w-4xl w-screen">
+        <DayCounter />
+        <FlagAnimation />
+        <HelpButton onClick={openHowToPlay} />
+      </header>
+      <HowToPlayPopup isOpen={isHowToPlayOpen} onClose={closeHowToPlay} />
+    </>
+  );
+};

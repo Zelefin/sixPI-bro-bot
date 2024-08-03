@@ -231,7 +231,7 @@ export const IndexPage: React.FC = () => {
   // Render
   return (
     <div
-      className={`flex flex-col w-full flex-1 px-4 text-center min-h-screen items-center justify-between h-screen bg-theme-bg-color ${theme}`}
+      className={`flex flex-col w-full flex-1 px-4 min-h-screen items-center justify-between h-screen bg-theme-bg-color ${theme}`}
     >
       <Header />
       <WordleBoard
