@@ -15,6 +15,7 @@ import { Navigate, Route, Router, Routes } from "react-router-dom";
 
 import { routes } from "@/navigation/routes.tsx";
 import { ThemeProvider } from "@/components/ThemeContext";
+import "@fontsource-variable/inter";
 
 export const App: FC = () => {
   const lp = useLaunchParams();

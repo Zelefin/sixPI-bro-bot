@@ -10,22 +10,41 @@ interface HowToPlayPopupProps {
 // WinAmount component to fetch and display win amounts
 const WinAmount: React.FC = () => {
   const [winAmounts, setWinAmounts] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWinAmounts = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const response = await fetch("/wordle/amounts", {
           method: "GET",
         });
 
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data: WinAmountsResponse = await response.json();
         setWinAmounts(data.win_amounts);
       } catch (error) {
         console.error("Error fetching win amounts:", error);
+        setError("Failed to load win amounts. Please try again later.");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchWinAmounts();
   }, []);
+
+  if (isLoading) {
+    return <p>Loading win amounts...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
+  }
 
   return (
     <div>
