@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Popup } from "./Popup";
 import { useUtils } from "@telegram-apps/sdk-react";
+import { calculateDayNumber } from "@/utils/dayCalculator";
 
 interface GameOverPopupProps {
   isOpen: boolean;
@@ -80,22 +81,30 @@ export const GameOverPopup: React.FC<GameOverPopupProps> = ({
     alert("Copied to clipboard!");
   };
 
-  // Function to share result
   const shareResult = () => {
+    const dayNumber = calculateDayNumber();
     const emojiResult = guessesToEmoji(guesses);
-    utils.shareURL("🇺🇦 Wordle!", emojiResult);
+    const shareText = `Day #${dayNumber}\n${emojiResult}`;
+    utils.shareURL("🇺🇦 Wordle!", shareText);
   };
 
   return (
     <Popup isOpen={isOpen} onClose={onClose} header={header}>
       {hasWon ? (
         <p>
-          You've guessed the word <b>{correctWord}</b> in {guessCount}{" "}
-          {guessCount === 1 ? "try" : "tries"}!
+          You've guessed the word{" "}
+          <b className="animate-gradient-x bg-gradient-to-r from-green-600 via-emerald-400 to-green-600 bg-300% bg-clip-text text-transparent">
+            {correctWord}
+          </b>{" "}
+          in {guessCount} {guessCount === 1 ? "try" : "tries"}!
         </p>
       ) : (
         <p>
-          The word was <b>{correctWord}</b>. Try again tomorrow!
+          The word was{" "}
+          <b className="animate-gradient-x bg-gradient-to-r from-gray-300 via-gray-600 to-gray-300 bg-300% bg-clip-text text-transparent">
+            {correctWord}
+          </b>
+          . Try again tomorrow!
         </p>
       )}
 
@@ -108,7 +117,7 @@ export const GameOverPopup: React.FC<GameOverPopupProps> = ({
       <pre className="text-2xl mt-4">{guessesToEmoji(guesses)}</pre>
       <div className="flex flex-wrap items-center justify-center mt-4 content-start gap-4">
         <button
-          className="bg-button-color text-button-text-color font-bold py-2 px-4 rounded mt-4"
+          className="flex items-center bg-button-color text-button-text-color border-2 border-button-color font-bold py-2 px-4 rounded mt-4"
           onClick={shareResult}
         >
           <svg
@@ -124,10 +133,10 @@ export const GameOverPopup: React.FC<GameOverPopupProps> = ({
               clipRule="evenodd"
             ></path>
           </svg>
-          {" Share"}
+          <p className="ml-1">Share</p>
         </button>
         <button
-          className="bg-transparent text-button-color border-button-color border-2 font-bold py-2 px-4 rounded mt-4"
+          className="flex items-center bg-transparent text-button-color border-button-color border-2 font-bold py-2 px-4 rounded mt-4"
           onClick={copyEmojis}
         >
           <svg
@@ -143,7 +152,7 @@ export const GameOverPopup: React.FC<GameOverPopupProps> = ({
               clipRule="evenodd"
             ></path>
           </svg>
-          {" Copy"}
+          <p className="ml-1">Copy</p>
         </button>
       </div>
     </Popup>

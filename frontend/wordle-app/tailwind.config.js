@@ -31,12 +31,34 @@ export default {
           '0%, 100%': { transform: 'translateX(0)' },
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-2px)' },
           '20%, 40%, 60%, 80%': { transform: 'translateX(2px)' },
-        }
+        },
+        'gradient-x': {
+          '0%, 100%': {
+            'background-size': '300% 300%',
+            'background-position': 'left center'
+          },
+          '50%': {
+            'background-size': '300% 300%',
+            'background-position': 'right center'
+          },
+        },
       },
       animation: {
         shake: 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
         'row-shake': 'row-shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
-      }
+        'gradient-x': 'gradient-x 3s ease infinite',
+      },
+      backgroundSize: {
+        '300%': '300%',
+      },
+      scale: {
+        '102': '1.02',
+      },
+    },
+  },
+  variants: {
+    extend: {
+      scale: ['hover'],
     },
   },
   plugins: [],

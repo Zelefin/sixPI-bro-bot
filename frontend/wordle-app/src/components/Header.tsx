@@ -2,20 +2,14 @@ import React, { useState } from "react";
 import { Player } from "@lottiefiles/react-lottie-player";
 import UAflag from "./UAflag.json";
 import { HowToPlayPopup } from "./HowToPlayPopup";
+import { calculateDayNumber } from "@/utils/dayCalculator";
 
 const DayCounter: React.FC = () => {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now.getTime() - start.getTime();
-  const oneDay = 1000 * 60 * 60 * 24;
-  const day = Math.floor(diff / oneDay);
+  const dayNumber = calculateDayNumber();
 
   return (
-    <div className="p-4 text-lg text-center font-bold basis-1/4 flex flex-row items-center justify-center gap-y-0">
-      <h1 className="text-text-color">
-        <div>Day</div>
-        <div>#{day}</div>
-      </h1>
+    <div className="p-4 text-lg text-center font-bold basis-1/4 flex flex-row items-center justify-center">
+      <h1 className="text-text-color">Day #{dayNumber}</h1>
     </div>
   );
 };

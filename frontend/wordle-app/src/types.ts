@@ -8,6 +8,10 @@ export interface GuessResponse {
   correct_word?: string;
 }
 
+export interface WinAmountsResponse {
+  win_amounts: number[];  // 0 -> 1 ... 5 -> 6 guess
+}
+
 export interface CloudData {
   date: string;
   attempts: string[];
