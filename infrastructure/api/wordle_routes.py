@@ -20,12 +20,12 @@ from infrastructure.api.words import answers, other_words
 
 
 win_amounts = {
-    0: 500,
-    1: 100,
-    2: 50,
-    3: 25,
-    4: 10,
-    5: 5,
+    1: 500,
+    2: 100,
+    3: 50,
+    4: 25,
+    5: 10,
+    6: 5,
 }
 
 
@@ -118,6 +118,10 @@ async def index_handler(request: Request):
     )
 
 
+async def get_win_amounts(request: Request):
+    return json_response({"win_amounts": [i for _, i in win_amounts.items()]})
+
+
 async def guess(request: Request):
     data = await request.post()
     if not data or not validate_telegram_data(data.get("_auth")):
@@ -131,7 +135,7 @@ async def guess(request: Request):
     telegram_data = parse_init_data(data.get("_auth"))
     user = json.loads(telegram_data.get("user"))
     user_id = int(user.get("id"))
-    if (user_attemps := await get_user_attempts(redis, user_id)) > 5:
+    if (user_attempts := await get_user_attempts(redis, user_id)) > 5:
         return json_response({"ok": False, "err": "Too many attempts"})
 
     guess_word: str | None = data.get("word")
@@ -156,7 +160,6 @@ async def guess(request: Request):
         )
 
     secret_word = await get_secret_word(redis)
-    logging.info(secret_word)
     result = check_word(guess_word, secret_word)
 
     if result["is_correct"] is True:
@@ -167,10 +170,11 @@ async def guess(request: Request):
         await add_user_attempt(redis, user_id, 5)
         async with session_pool() as session:
             repo = RequestsRepo(session)
-            # Of cource our changes doesn't affect win amount
-            # because "user_attempts" contains (already) outdated number of attempts that we've got from get_user_attempts.
-            # Since we ain't overriding it with new call, it save to calculate win amount with it
-            win_amount = win_amounts[user_attemps]
+            # "user_attempts" contains (already) outdated number of attempts that we've got from get_user_attempts.
+            # Since we ain't overriding it with new func call, it save to calculate win amount with it
+            # and +1 since user_attempts starts from 0
+            adjusted_user_attempts = user_attempts + 1
+            win_amount = win_amounts[adjusted_user_attempts]
             current_balance = await get_user_balance(user_id, repo)
             new_balance = current_balance + win_amount
             await update_user_balance(user_id, new_balance, repo)
@@ -180,7 +184,7 @@ async def guess(request: Request):
             full_name = f"{first_name} {last_name}" if last_name else first_name
             name_with_mention = f'<a href="tg://user?id={user_id}">{full_name}</a>'
 
-            success_message = f"Користувач {name_with_mention} розв'язав щоденне вордлі і отримав {win_amount} рейтингу, тепер у нього {new_balance} рейтингу.\nВітаємо!🥳"
+            success_message = f"Користувач {name_with_mention} розгадав щоденне вордлі з {adjusted_user_attempts} спроби і отримав {win_amount} рейтингу, тепер у нього {new_balance} рейтингу.\nВітаємо!🥳"
 
             if (await bot.get_my_name()).name == "Just Curious":
                 chat_id = config.chat.debug
@@ -209,21 +213,13 @@ async def guess(request: Request):
 
     await add_user_attempt(redis, user_id)
 
-    logging.info(
-        {
-            "ok": True,
-            "is_correct": result["is_correct"],
-            "is_common": True,
-            "word": result["word"],
-        }
-    )
-
     return json_response(
         {
             "ok": True,
             "is_correct": result["is_correct"],
             "is_common": True,
             "word": result["word"],
+            "correct_word": secret_word if ((user_attempts + 1) == 6) else "",
         }
     )
 
@@ -238,6 +234,7 @@ def setup_wordle_routes(app: web.Application):
         },
     )
     app.router.add_get("", index_handler)
+    app.router.add_get("/amounts", get_win_amounts)
     app.router.add_post("/guess", guess)
     app.router.add_static(
         "/assets/",
