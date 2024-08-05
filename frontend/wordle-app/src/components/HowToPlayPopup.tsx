@@ -18,6 +18,9 @@ const WinAmount: React.FC = () => {
       try {
         const response = await fetch("/wordle/amounts", {
           method: "GET",
+          headers: {
+            "ngrok-skip-browser-warning": "69420",
+          },
         });
 
         const data: WinAmountsResponse = await response.json();
