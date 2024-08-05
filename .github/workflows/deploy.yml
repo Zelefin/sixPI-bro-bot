@@ -24,19 +24,23 @@ jobs:
           npm install
           npm run build
 
+      - name: Upload casino-app build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: casino-app-build
+          path: frontend/casino-app/dist/
+
       - name: Install dependencies and build wordle-app
         run: |
           cd frontend/wordle-app
           npm install
           npm run build
 
-      - name: Upload build artifacts
+      - name: Upload wordle-app build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: build
-          path: |
-            frontend/casino-app/dist/
-            frontend/wordle-app/dist/
+          name: wordle-app-build
+          path: frontend/wordle-app/dist/
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,11 +50,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Download build artifacts
+      - name: Download casino-app build artifacts
         uses: actions/download-artifact@v2
         with:
-          name: build
-          path: dist/
+          name: casino-app-build
+          path: dist/casino-app
+
+      - name: Download wordle-app build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: wordle-app-build
+          path: dist/wordle-app
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -63,5 +73,5 @@ jobs:
 
       - name: Deploy to server
         run: |
-          scp -r dist/frontend/casino-app/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/casino-app
-          scp -r dist/frontend/wordle-app/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_PATH }}/wordle-app
+          scp -r dist/casino-app/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/casino-app
+          scp -r dist/wordle-app/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/wordle-app
