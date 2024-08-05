@@ -275,11 +275,7 @@ export const IndexPage: React.FC = () => {
         currentGuessIndex={guesses.length}
         shake={shake}
       />
-      <Footer
-        handleKeyPress={handleKeyPress}
-        letterStatuses={letterStatuses}
-        deleteTodayKey={deleteTodayKey}
-      />
+      <Footer handleKeyPress={handleKeyPress} letterStatuses={letterStatuses} />
       <GameOverPopup
         isOpen={isGameOverPopupOpen}
         onClose={closeGameOverPopup}
