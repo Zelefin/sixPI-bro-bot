@@ -111,19 +111,19 @@ export const GameOverPopup: React.FC<GameOverPopupProps> = ({
       <Popup isOpen={isOpen} onClose={onClose} header={header}>
         {hasWon ? (
           <p>
-            You've guessed the word{" "}
+            {"You've guessed the word "}
             <b className="animate-gradient-x bg-gradient-to-r from-green-600 via-emerald-400 to-green-600 bg-300% bg-clip-text text-transparent">
               {correctWord}
-            </b>{" "}
-            in {guessCount} {guessCount === 1 ? "try" : "tries"}!
+            </b>
+            {` in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`}
           </p>
         ) : (
           <p>
-            The word was{" "}
+            {"The word was "}
             <b className="animate-gradient-x bg-gradient-to-r from-gray-300 via-gray-600 to-gray-300 bg-300% bg-clip-text text-transparent">
               {correctWord}
             </b>
-            . Try again tomorrow!
+            {". Try again tomorrow!"}
           </p>
         )}
 
