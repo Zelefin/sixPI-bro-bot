@@ -54,13 +54,13 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: casino-app-build
-          path: dist/casino-app
+          path: dist/casino-app/dist
 
       - name: Download wordle-app build artifacts
         uses: actions/download-artifact@v2
         with:
           name: wordle-app-build
-          path: dist/wordle-app
+          path: dist/wordle-app/dist
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -73,5 +73,5 @@ jobs:
 
       - name: Deploy to server
         run: |
-          scp -r dist/casino-app/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/casino-app
-          scp -r dist/wordle-app/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/wordle-app
+          scp -r dist/casino-app/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/casino-app
+          scp -r dist/wordle-app/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/wordle-app
