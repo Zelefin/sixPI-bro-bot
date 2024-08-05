@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build and Deploy Casino and Wordle Apps
 
 on:
   push:
@@ -16,23 +16,27 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: "18"
 
-      - name: Install dependencies
+      - name: Install dependencies and build casino-app
         run: |
           cd frontend/casino-app
           npm install
+          npm run build
 
-      - name: Build project
+      - name: Install dependencies and build wordle-app
         run: |
-          cd frontend/casino-app
+          cd frontend/wordle-app
+          npm install
           npm run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v2
         with:
           name: build
-          path: frontend/casino-app/dist/
+          path: |
+            frontend/casino-app/dist/
+            frontend/wordle-app/dist/
 
   deploy:
     runs-on: ubuntu-latest
@@ -58,4 +62,6 @@ jobs:
           ssh-keyscan -H ${{ secrets.DEPLOY_SERVER }} >> ~/.ssh/known_hosts
 
       - name: Deploy to server
-        run: scp -r dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}
+        run: |
+          scp -r dist/frontend/casino-app/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/casino-app
+          scp -r dist/frontend/wordle-app/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_PATH }}/wordle-app
