@@ -24,7 +24,12 @@ from redis.asyncio.connection import ConnectionPool
 
 from infrastructure.api.casino_routes import setup_casino_routes
 from infrastructure.api.common_routes import setup_common_routes
+from infrastructure.api.crypto_exchange_api.main import setup_crypto_exchange_routes
 from infrastructure.api.wordle_routes import setup_wordle_routes
+
+# from infrastructure.api.connect_four.connect_four_routes import (
+#     setup_connect_four_routes,
+# )
 from infrastructure.database.repo.requests import Database
 from infrastructure.database.setup import create_engine, create_session_pool
 from bot.config_reader import Config, load_config
@@ -221,6 +226,21 @@ def main():
         wordle_app["session_pool"] = session_pool
         setup_wordle_routes(wordle_app)
         app.add_subapp("/wordle", wordle_app)
+
+        crypto_exchange_app = web.Application()
+        crypto_exchange_app["config"] = config
+        crypto_exchange_app["redis"] = redis
+        crypto_exchange_app["session_pool"] = session_pool
+        setup_crypto_exchange_routes(crypto_exchange_app)
+        app.add_subapp("/crypto-exchange", crypto_exchange_app)
+
+        # connect_four_app = web.Application()
+        # connect_four_app["bot"] = bot
+        # connect_four_app["config"] = config
+        # connect_four_app["redis"] = redis
+        # connect_four_app["session_pool"] = session_pool
+        # setup_connect_four_routes(connect_four_app)
+        # app.add_subapp("/connect-four", connect_four_app)
 
         # poker_app = web.Application()
         # poker_app["bot"] = bot
