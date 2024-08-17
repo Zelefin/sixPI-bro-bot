@@ -2,11 +2,12 @@ import logging
 from dataclasses import dataclass
 from typing import List, Optional
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import desc, func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database.models import Base
 from infrastructure.database.models.tables import (
+    CryptoTransaction,
     MessageUser,
     RatingUsers,
 )
@@ -86,6 +87,99 @@ class MessageUserRepo:
         return result.scalar_one_or_none()
 
 
+class CryptoTransactionsRepo:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def add_user_transaction(
+        self,
+        user_id: int,
+        full_name: str,
+        coin_id: int,
+        coin_symbol: str,
+        amount: float,
+        points_spent: int,
+        buy_price: float,
+    ):
+        stmt = insert(CryptoTransaction).values(
+            user_id=user_id,
+            full_name=full_name,
+            coin_id=coin_id,
+            coin_symbol=coin_symbol,
+            amount=amount,
+            points_spent=points_spent,
+            buy_price=buy_price,
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def get_user_transactions(self, user_id: int) -> List[CryptoTransaction]:
+        stmt = (
+            select(CryptoTransaction)
+            .where(CryptoTransaction.user_id == user_id)
+            .order_by(desc(CryptoTransaction.open_date))
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def get_user_transaction(
+        self, user_id: int, transaction_id: int
+    ) -> CryptoTransaction | None:
+        stmt = select(CryptoTransaction).where(
+            CryptoTransaction.id == transaction_id,
+            CryptoTransaction.user_id == user_id,
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def close_user_transaction(
+        self, user_id: int, transaction_id: int, sell_price: float
+    ):
+        stmt = (
+            update(CryptoTransaction)
+            .where(
+                CryptoTransaction.id == transaction_id,
+                CryptoTransaction.user_id == user_id,
+            )
+            .values(sell_price=sell_price, close_date=func.now())
+            .returning(CryptoTransaction)
+        )
+        result = await self.session.execute(stmt)
+        transaction = result.scalar_one_or_none()
+
+        if not transaction:
+            return None
+
+        # Calculate profit
+        profit = (sell_price - transaction.buy_price) * transaction.amount
+
+        # Update profit
+        stmt = (
+            update(CryptoTransaction)
+            .where(
+                CryptoTransaction.id == transaction_id,
+                CryptoTransaction.user_id == user_id,
+            )
+            .values(profit=profit)
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+        return transaction
+
+    async def get_top_transactions(self, limit: int = 25) -> List[CryptoTransaction]:
+        stmt = (
+            select(CryptoTransaction)
+            .order_by(
+                desc(func.coalesce(CryptoTransaction.profit, 0)),
+                desc(CryptoTransaction.open_date),
+            )
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+
 @dataclass
 class RequestsRepo:
     """
@@ -103,6 +197,10 @@ class RequestsRepo:
     @property
     def message_user(self) -> MessageUserRepo:
         return MessageUserRepo(self.session)
+
+    @property
+    def crypto_transactions(self) -> CryptoTransactionsRepo:
+        return CryptoTransactionsRepo(self.session)
 
 
 class Database:
