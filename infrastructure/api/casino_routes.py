@@ -1,7 +1,6 @@
 import json
 import logging
 import random
-import time
 from pathlib import Path
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -10,24 +9,13 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_request import Request
 from aiohttp.web_response import json_response
 
-from infrastructure.api.common_routes import get_user_balance, update_user_balance
+from infrastructure.api.common_routes import (
+    get_user_balance,
+    update_user_balance,
+    check_rate_limit,
+)
 from infrastructure.api.utils import validate_telegram_data, parse_init_data
 from infrastructure.database.repo.requests import RequestsRepo
-
-
-# Rate limiting
-RATE_LIMIT = 2  # requests per second
-last_request_time = {}
-
-
-def check_rate_limit(user_id: int) -> bool:
-    current_time = time.time()
-    if user_id in last_request_time:
-        time_passed = current_time - last_request_time[user_id]
-        if time_passed < 1 / RATE_LIMIT:
-            return True
-    last_request_time[user_id] = current_time
-    return False
 
 
 # Game logic
@@ -65,6 +53,13 @@ async def spin(request: Request):
     if not data or not validate_telegram_data(data.get("_auth")):
         return json_response({"ok": False, "err": "Unauthorized"}, status=401)
 
+    telegram_data = parse_init_data(data.get("_auth"))
+    user = json.loads(telegram_data.get("user"))
+    user_id = user.get("id")
+
+    if check_rate_limit(user_id):
+        return json_response({"ok": False, "err": "Rate limit exceeded"}, status=429)
+
     session_pool = request.app["session_pool"]
     bot = request.app["bot"]
     config = request.app["config"]
@@ -75,13 +70,6 @@ async def spin(request: Request):
             stake = 1
     except ValueError:
         stake = 1
-
-    telegram_data = parse_init_data(data.get("_auth"))
-    user = json.loads(telegram_data.get("user"))
-    user_id = user.get("id")
-
-    if check_rate_limit(user_id):
-        return json_response({"ok": False, "err": "Rate limit exceeded"}, status=429)
 
     async with session_pool() as session:
         repo = RequestsRepo(session)

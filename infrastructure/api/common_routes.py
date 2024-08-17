@@ -1,9 +1,25 @@
+import time
 from aiohttp.web_request import Request
 from aiohttp import web
 from aiohttp.web_response import json_response
 import aiohttp_cors
 
 from infrastructure.database.repo.requests import RequestsRepo
+
+
+# Rate limiting
+RATE_LIMIT = 2  # requests per second
+last_request_time = {}
+
+
+def check_rate_limit(user_id: int) -> bool:
+    current_time = time.time()
+    if user_id in last_request_time:
+        time_passed = current_time - last_request_time[user_id]
+        if time_passed < 1 / RATE_LIMIT:
+            return True
+    last_request_time[user_id] = current_time
+    return False
 
 
 async def get_user_balance(user_id: int, repo: RequestsRepo) -> int:
