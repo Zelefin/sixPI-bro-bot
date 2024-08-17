@@ -41,6 +41,10 @@ class Anthropic(BaseSettings):
     api_key: str
 
 
+class CoinMarketCap(BaseSettings):
+    api_key: str
+
+
 class Redis(BaseSettings):
     host: str
     port: int
@@ -59,6 +63,7 @@ class Config(BaseSettings):
     openai: OpenAI
     elevenlabs: ElevenLabs
     anthropic: Anthropic
+    coinmarketcap: CoinMarketCap
     redis: Redis
 
     class Config:
