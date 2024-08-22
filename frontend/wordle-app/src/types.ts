@@ -17,3 +17,12 @@ export interface CloudData {
   attempts: string[];
   correctWord: string;
 }
+
+export interface LeaderboardEntry {
+  full_name: string;
+  guesses: number;
+}
+
+export interface LeaderboardResponse {
+  users: LeaderboardEntry[];
+}
