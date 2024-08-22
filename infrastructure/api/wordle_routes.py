@@ -77,6 +77,33 @@ async def add_user_attempt(redis: Redis, user_id: int, amount: int = 1) -> None:
         await pipe.execute()
 
 
+async def update_leaderboard(redis: Redis, full_name: str, guesses: int) -> None:
+    """
+    Update the leaderboard in Redis with the user's name and number of guesses.
+    """
+    leaderboard_key = "wordle_leaderboard"
+    expiry_time = get_seconds_until_midnight_kyiv()
+
+    # Use a Redis sorted set to store the leaderboard
+    # We use negative guesses as the score so that lower guesses are ranked higher
+    await redis.zadd(leaderboard_key, {full_name: -guesses})
+    await redis.expire(leaderboard_key, expiry_time)
+
+
+async def get_leaderboard(redis: Redis) -> list:
+    """
+    Retrieve the leaderboard from Redis.
+    """
+    leaderboard_key = "wordle_leaderboard"
+    leaderboard_data = await redis.zrange(leaderboard_key, 0, -1, withscores=True)
+
+    # Convert the data to the required format
+    return [
+        {"full_name": name.decode("utf-8"), "guesses": int(-score)}
+        for name, score in leaderboard_data
+    ]
+
+
 def check_word(guess_word: str, secret_word: str) -> dict:
     """
     Check the guess word against the secret word and return the result.
@@ -178,38 +205,43 @@ async def guess(request: Request):
             current_balance = await get_user_balance(user_id, repo)
             new_balance = current_balance + win_amount
             await update_user_balance(user_id, new_balance, repo)
-        try:
-            first_name = user.get("first_name")
-            last_name = user.get("last_name")
-            full_name = f"{first_name} {last_name}" if last_name else first_name
-            name_with_mention = f'<a href="tg://user?id={user_id}">{full_name}</a>'
 
-            success_message = f"Користувач {name_with_mention} розгадав щоденне вордлі з {adjusted_user_attempts} спроби і отримав {win_amount} рейтингу, тепер у нього {new_balance} рейтингу.\nВітаємо!🥳"
+        first_name = user.get("first_name")
+        last_name = user.get("last_name")
+        full_name = f"{first_name} {last_name}" if last_name else first_name
+        await update_leaderboard(redis, full_name, adjusted_user_attempts)
+        # try:
+        #     first_name = user.get("first_name")
+        #     last_name = user.get("last_name")
+        #     full_name = f"{first_name} {last_name}" if last_name else first_name
+        #     name_with_mention = f'<a href="tg://user?id={user_id}">{full_name}</a>'
 
-            if (await bot.get_my_name()).name == "Just Curious":
-                chat_id = config.chat.debug
-                url = "https://t.me/emmm_my_bot/wordle"
-            else:
-                chat_id = config.chat.prod
-                url = "https://t.me/SixPiBro_bot/wordle"
+        #     success_message = f"Користувач {name_with_mention} розгадав щоденне вордлі з {adjusted_user_attempts} спроби і отримав {win_amount} рейтингу, тепер у нього {new_balance} рейтингу.\nВітаємо!🥳"
 
-            await bot.send_message(
-                chat_id=chat_id,
-                text=success_message,
-                parse_mode="HTML",
-                reply_markup=InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [
-                            InlineKeyboardButton(
-                                text="💡 Зіграти теж",
-                                url=url,
-                            )
-                        ]
-                    ]
-                ),
-            )
-        except Exception as e:
-            logging.error(f"Error sending message: {e}")
+        #     if (await bot.get_my_name()).name == "Just Curious":
+        #         chat_id = config.chat.debug
+        #         url = "https://t.me/emmm_my_bot/wordle"
+        #     else:
+        #         chat_id = config.chat.prod
+        #         url = "https://t.me/SixPiBro_bot/wordle"
+
+        #     await bot.send_message(
+        #         chat_id=chat_id,
+        #         text=success_message,
+        #         parse_mode="HTML",
+        #         reply_markup=InlineKeyboardMarkup(
+        #             inline_keyboard=[
+        #                 [
+        #                     InlineKeyboardButton(
+        #                         text="💡 Зіграти теж",
+        #                         url=url,
+        #                     )
+        #                 ]
+        #             ]
+        #         ),
+        #     )
+        # except Exception as e:
+        #     logging.error(f"Error sending message: {e}")
 
     await add_user_attempt(redis, user_id)
 
@@ -224,6 +256,15 @@ async def guess(request: Request):
     )
 
 
+async def leaderboard_handler(request: Request):
+    """
+    Handle GET requests for the leaderboard.
+    """
+    redis: Redis = request.app["redis"]
+    leaderboard = await get_leaderboard(redis)
+    return json_response({"users": leaderboard})
+
+
 def setup_wordle_routes(app: web.Application):
     cors = aiohttp_cors.setup(
         app,
@@ -235,6 +276,7 @@ def setup_wordle_routes(app: web.Application):
     )
     app.router.add_get("", index_handler)
     app.router.add_get("/amounts", get_win_amounts)
+    app.router.add_get("/leaderboard", leaderboard_handler)
     app.router.add_post("/guess", guess)
     app.router.add_static(
         "/assets/",
