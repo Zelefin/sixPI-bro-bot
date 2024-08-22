@@ -1,7 +1,9 @@
+import datetime
 import logging
 from dataclasses import dataclass
 from typing import List, Optional
 
+from pytz import timezone
 from sqlalchemy import desc, func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -90,6 +92,11 @@ class MessageUserRepo:
 class CryptoTransactionsRepo:
     def __init__(self, session: AsyncSession):
         self.session = session
+        self.ukraine_tz = timezone("Europe/Kiev")
+
+    def _get_current_ukraine_time(self):
+        """Helper method to get the current time in Ukraine, respecting DST"""
+        return datetime.datetime.now(self.ukraine_tz)
 
     async def add_user_transaction(
         self,
@@ -101,6 +108,8 @@ class CryptoTransactionsRepo:
         points_spent: int,
         buy_price: float,
     ):
+        current_time = self._get_current_ukraine_time()
+
         stmt = insert(CryptoTransaction).values(
             user_id=user_id,
             full_name=full_name,
@@ -109,18 +118,43 @@ class CryptoTransactionsRepo:
             amount=amount,
             points_spent=points_spent,
             buy_price=buy_price,
+            open_date=current_time,
         )
         await self.session.execute(stmt)
         await self.session.commit()
 
-    async def get_user_transactions(self, user_id: int) -> List[CryptoTransaction]:
+    async def get_user_open_transactions(self, user_id: int) -> List[CryptoTransaction]:
         stmt = (
             select(CryptoTransaction)
-            .where(CryptoTransaction.user_id == user_id)
+            .where(
+                CryptoTransaction.user_id == user_id,
+                CryptoTransaction.close_date.is_(None),
+            )
             .order_by(desc(CryptoTransaction.open_date))
         )
         result = await self.session.execute(stmt)
         return result.scalars().all()
+
+    async def get_user_closed_transactions(
+        self, user_id: int
+    ) -> List[CryptoTransaction]:
+        stmt = (
+            select(CryptoTransaction)
+            .where(
+                CryptoTransaction.user_id == user_id,
+                CryptoTransaction.close_date.isnot(None),
+            )
+            .order_by(desc(CryptoTransaction.close_date))
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def get_user_transactions_split(
+        self, user_id: int
+    ) -> tuple[List[CryptoTransaction], List[CryptoTransaction]]:
+        open_transactions = await self.get_user_open_transactions(user_id)
+        closed_transactions = await self.get_user_closed_transactions(user_id)
+        return open_transactions, closed_transactions
 
     async def get_user_transaction(
         self, user_id: int, transaction_id: int
@@ -135,13 +169,15 @@ class CryptoTransactionsRepo:
     async def close_user_transaction(
         self, user_id: int, transaction_id: int, sell_price: float
     ):
+        current_time = self._get_current_ukraine_time()
+
         stmt = (
             update(CryptoTransaction)
             .where(
                 CryptoTransaction.id == transaction_id,
                 CryptoTransaction.user_id == user_id,
             )
-            .values(sell_price=sell_price, close_date=func.now())
+            .values(sell_price=sell_price, close_date=current_time)
             .returning(CryptoTransaction)
         )
         result = await self.session.execute(stmt)
@@ -170,10 +206,9 @@ class CryptoTransactionsRepo:
     async def get_top_transactions(self, limit: int = 25) -> List[CryptoTransaction]:
         stmt = (
             select(CryptoTransaction)
-            .order_by(
-                desc(func.coalesce(CryptoTransaction.profit, 0)),
-                desc(CryptoTransaction.open_date),
-            )
+            .where(CryptoTransaction.sell_price.isnot(None))
+            .where(CryptoTransaction.profit > 0.1)
+            .order_by(desc(CryptoTransaction.profit))
             .limit(limit)
         )
         result = await self.session.execute(stmt)

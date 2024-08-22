@@ -17,6 +17,16 @@ export const FullScreenSticker: React.FC<FullScreenStickerProps> = ({
   useEffect(() => {
     // Start the grow animation when the component mounts
     setIsVisible(true);
+
+    // Disable scrolling when the component mounts
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    // Re-enable scrolling when the component unmounts
+    return () => {
+      document.body.style.overflow = "unset";
+      document.body.style.touchAction = "unset";
+    };
   }, []);
 
   const handleAnimationComplete = () => {
@@ -35,6 +45,11 @@ export const FullScreenSticker: React.FC<FullScreenStickerProps> = ({
     setIsVisible(false);
   };
 
+  // Prevent default behavior for touch events
+  const preventDefault = (e: React.TouchEvent) => {
+    e.preventDefault();
+  };
+
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-500 ${
@@ -44,6 +59,9 @@ export const FullScreenSticker: React.FC<FullScreenStickerProps> = ({
         backdropFilter: "blur(5px)",
         WebkitBackdropFilter: "blur(5px)",
       }}
+      onTouchMove={preventDefault}
+      onTouchStart={preventDefault}
+      onTouchEnd={preventDefault}
     >
       <div
         className={`relative transition-all duration-500 ${

@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from aiohttp.web_response import json_response
 from aiohttp.web_request import Request
 
@@ -12,20 +13,23 @@ async def get_basic_coins(request: Request):
     redis = request.app["redis"]
     config = request.app["config"]
 
-    popular_coins_ids = [1, 2, 3, 4, 5]
+    popular_coins_ids = [1, 1027, 1839, 5426, 52, 11419, 2010]
 
     try:
         return json_response(
             {
                 "ok": True,
                 "coins_infos": [
-                    get_coin_info(redis, config, coin_id=coin_id)
+                    await get_coin_info(redis, config, coin_id=coin_id)
                     for coin_id in popular_coins_ids
                 ],
             }
         )
     except Exception as e:
-        return json_response({"ok": False, "err": str(e)}, status=500)
+        logging.error(f"Failed to get basic coins: {e}")
+        return json_response(
+            {"ok": False, "err": "Failed to get basic coins"}, status=500
+        )
 
 
 async def search(request: Request):
@@ -44,7 +48,7 @@ async def search(request: Request):
         return json_response({"ok": False, "err": "Rate limit exceeded"}, status=429)
 
     try:
-        coin_symbol = str(data["coin_symbol"])
+        coin_symbol = re.sub(r"[^A-Z0-9]", "", str(data["coin_symbol"]).upper())
     except KeyError:
         return json_response({"ok": False, "err": "Missing coin symbol"}, status=400)
 
@@ -53,7 +57,10 @@ async def search(request: Request):
 
     try:
         return json_response(
-            {"ok": True, "coins_info": get_coin_info(redis, config, symbol=coin_symbol)}
+            {
+                "ok": True,
+                "coins_info": await get_coin_info(redis, config, symbol=coin_symbol),
+            }
         )
     except Exception as e:
         logging.error(f"Failed to get {coin_symbol} info: {e}")

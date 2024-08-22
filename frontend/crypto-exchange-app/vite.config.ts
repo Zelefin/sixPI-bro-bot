@@ -21,6 +21,43 @@ export default defineConfig({
   server: {
     // Exposes your dev server and makes it accessible for the devices in the same network.
     host: true,
+    proxy: {
+      '/crypto-exchange/basic_coins': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/crypto-exchange/search': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/crypto-exchange/buy': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/crypto-exchange/sell': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/crypto-exchange/transactions': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/crypto-exchange/top_transactions': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/get_balance': {
+        target: 'http://127.0.0.1:8080/',
+        changeOrigin: true,
+        secure: false,
+      },
+    }
   },
 });
 

@@ -16,6 +16,6 @@ async def get_top_transactions(request: Request):
         top_transactions = await repo.crypto_transactions.get_top_transactions()
 
         formatted_transactions = [
-            format_transaction(redis, config, t) for t in top_transactions
+            await format_transaction(redis, config, t) for t in top_transactions
         ]
         return json_response({"ok": True, "top_transactions": formatted_transactions})

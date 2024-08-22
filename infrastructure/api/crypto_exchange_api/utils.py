@@ -32,7 +32,7 @@ async def get_coin_info(
 
     # If not in cache, fetch from API
     async with ClientSession() as session:
-        url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+        url = "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest"
         parameters = {"id": coin_id} if coin_id else {"symbol": symbol}
         headers = {
             "Accepts": "application/json",
@@ -53,6 +53,8 @@ async def get_coin_info(
             else:
                 result = []
                 for coin in json_resp["data"][symbol]:
+                    if coin["is_active"] == 0:
+                        continue
                     result.append(
                         {
                             "id": coin["id"],

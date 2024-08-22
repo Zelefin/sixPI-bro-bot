@@ -29,13 +29,20 @@ async def transactions(request: Request):
 
     async with session_pool() as session:
         repo = RequestsRepo(session)
-        transactions = await repo.crypto_transactions.get_user_transactions(user_id)
+        open_transactions, closed_transactions = (
+            await repo.crypto_transactions.get_user_transactions_split(user_id)
+        )
 
         return json_response(
             {
                 "ok": True,
-                "transactions": [
-                    format_transaction(redis, config, t) for t in transactions
+                "open_transactions": [
+                    await format_transaction(redis, config, t)
+                    for t in open_transactions
+                ],
+                "closed_transactions": [
+                    await format_transaction(redis, config, t)
+                    for t in closed_transactions
                 ],
             }
         )

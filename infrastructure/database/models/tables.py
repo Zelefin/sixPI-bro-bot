@@ -1,6 +1,7 @@
 import datetime
-from sqlalchemy import BIGINT, TIMESTAMP, Float, Integer, String, func
+from sqlalchemy import BIGINT, TIMESTAMP, Float, Integer, String, TypeDecorator, func
 from sqlalchemy.orm import Mapped, mapped_column
+from pytz import timezone
 
 from .base import Base, TableNameMixin
 
@@ -25,13 +26,27 @@ class MessageUser(Base, TableNameMixin):
     )
 
 
+class TZTimeStamp(TypeDecorator):
+    impl = TIMESTAMP
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return value.astimezone(timezone("UTC"))
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            ukraine_tz = timezone("Europe/Kiev")
+            return value.replace(tzinfo=timezone("UTC")).astimezone(ukraine_tz)
+        return value
+
+
 class CryptoTransaction(Base, TableNameMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BIGINT, nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    coin_id: Mapped[int] = mapped_column(
-        Integer, nullable=False
-    )  # coin id on coinmarketcup
+    coin_id: Mapped[int] = mapped_column(Integer, nullable=False)
     coin_symbol: Mapped[str] = mapped_column(String(10), nullable=False)
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     points_spent: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -39,9 +54,9 @@ class CryptoTransaction(Base, TableNameMixin):
     sell_price: Mapped[float] = mapped_column(Float, nullable=True)
     profit: Mapped[float] = mapped_column(Float, nullable=True)
     open_date: Mapped[datetime.datetime] = mapped_column(
-        TIMESTAMP, server_default=func.now()
+        TZTimeStamp, server_default=func.now()
     )
-    close_date: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, nullable=True)
+    close_date: Mapped[datetime.datetime] = mapped_column(TZTimeStamp, nullable=True)
 
     def __repr__(self):
-        return f"<CryptoTransaction id={self.id} user_id={self.user_id} crypto={self.crypto.value} amount={self.amount}>"
+        return f"<CryptoTransaction id={self.id} user_id={self.user_id} coin_symbol={self.coin_symbol} amount={self.amount}>"

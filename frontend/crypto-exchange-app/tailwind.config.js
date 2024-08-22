@@ -19,10 +19,27 @@ export default {
           '0%': { transform: 'scale(1)' },
           '100%': { transform: 'scale(0)' },
         },
+        'gradient-x': {
+          '0%, 100%': {
+            'background-size': '300% 300%',
+            'background-position': 'left center'
+          },
+          '50%': {
+            'background-size': '300% 300%',
+            'background-position': 'right center'
+          },
+        },
       },
       animation: {
         grow: 'grow 0.5s ease-out',
         shrink: 'shrink 0.5s ease-in',
+        'gradient-x': 'gradient-x 3s ease infinite',
+      },
+      backgroundSize: {
+        '300%': '300%',
+      },
+      scale: {
+        '102': '1.02',
       },
     },
   },

@@ -61,7 +61,7 @@ async def buy(request: Request):
         )
 
     coin_price = coin_info["price"]
-    coin_symbol = coin_info["simbol"]
+    coin_symbol = coin_info["symbol"]
 
     amount = points_to_spend / coin_price
 
