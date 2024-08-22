@@ -117,8 +117,12 @@ export const MarketContent: React.FC<MarketContentProps> = ({ setBalance }) => {
         body: formData,
       });
 
-      if (!response.ok)
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Too many requests. Please try again later.");
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
 

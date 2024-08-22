@@ -86,6 +86,9 @@ export const TransactionsContent: React.FC<TransactionsContentProps> = ({
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Too many requests. Please try again later.");
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 

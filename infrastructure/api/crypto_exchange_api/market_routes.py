@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import re
@@ -45,7 +46,7 @@ async def search(request: Request):
         return json_response({"ok": False, "err": "Unauthorized"}, status=401)
 
     if check_rate_limit(user_id):
-        return json_response({"ok": False, "err": "Rate limit exceeded"}, status=429)
+        asyncio.sleep(1)
 
     try:
         coin_symbol = re.sub(r"[^A-Z0-9]", "", str(data["coin_symbol"]).upper())
