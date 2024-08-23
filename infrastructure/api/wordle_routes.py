@@ -77,16 +77,30 @@ async def add_user_attempt(redis: Redis, user_id: int, amount: int = 1) -> None:
         await pipe.execute()
 
 
-async def update_leaderboard(redis: Redis, full_name: str, guesses: int) -> None:
+async def update_leaderboard(
+    redis: Redis, full_name: str, guesses: int, coins_earned: int
+) -> None:
     """
-    Update the leaderboard in Redis with the user's name and number of guesses.
+    Update the leaderboard in Redis with the user's name, number of guesses, and coins earned.
     """
     leaderboard_key = "wordle_leaderboard"
     expiry_time = get_seconds_until_midnight_kyiv()
 
-    # Use a Redis sorted set to store the leaderboard
-    # We use negative guesses as the score so that lower guesses are ranked higher
-    await redis.zadd(leaderboard_key, {full_name: -guesses})
+    # Use a Redis hash to store user data
+    user_key = f"wordle_user:{full_name}"
+    await redis.hset(
+        user_key,
+        mapping={
+            "guesses": guesses,
+            "coins_earned": coins_earned,
+            "timestamp": datetime.now().timestamp(),
+        },
+    )
+    await redis.expire(user_key, expiry_time)
+
+    # Use a Redis sorted set for ranking
+    score = float(f"{guesses}.{int(datetime.now().timestamp())}")
+    await redis.zadd(leaderboard_key, {full_name: score})
     await redis.expire(leaderboard_key, expiry_time)
 
 
@@ -97,11 +111,20 @@ async def get_leaderboard(redis: Redis) -> list:
     leaderboard_key = "wordle_leaderboard"
     leaderboard_data = await redis.zrange(leaderboard_key, 0, -1, withscores=True)
 
-    # Convert the data to the required format
-    return [
-        {"full_name": name.decode("utf-8"), "guesses": int(-score)}
-        for name, score in leaderboard_data
-    ]
+    result = []
+    for name, score in leaderboard_data:
+        user_key = f"wordle_user:{name.decode('utf-8')}"
+        user_data = await redis.hgetall(user_key)
+        if user_data:
+            result.append(
+                {
+                    "full_name": name.decode("utf-8"),
+                    "guesses": int(user_data[b"guesses"]),
+                    "coins_earned": int(user_data[b"coins_earned"]),
+                }
+            )
+
+    return result
 
 
 def check_word(guess_word: str, secret_word: str) -> dict:
@@ -187,6 +210,7 @@ async def guess(request: Request):
         )
 
     secret_word = await get_secret_word(redis)
+    logging.info(secret_word)
     result = check_word(guess_word, secret_word)
 
     if result["is_correct"] is True:
@@ -209,7 +233,8 @@ async def guess(request: Request):
         first_name = user.get("first_name")
         last_name = user.get("last_name")
         full_name = f"{first_name} {last_name}" if last_name else first_name
-        await update_leaderboard(redis, full_name, adjusted_user_attempts)
+        await update_leaderboard(redis, full_name, adjusted_user_attempts, win_amount)
+
         # try:
         #     first_name = user.get("first_name")
         #     last_name = user.get("last_name")

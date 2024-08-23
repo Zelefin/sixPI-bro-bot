@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Popup } from "@/components/Popup";
-import {
-  LeaderboardEntry,
-  LeaderboardResponse,
-  WinAmountsResponse,
-} from "@/types";
+import { LeaderboardEntry, LeaderboardResponse } from "@/types";
 
 interface LeaderboardPopupProps {
   isOpen: boolean;
@@ -26,7 +22,6 @@ const LeaderboardList: React.FC = () => {
   const [leaderboardEntries, setLeaderboardEntries] = useState<
     LeaderboardEntry[]
   >([]);
-  const [winAmounts, setWinAmounts] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -50,29 +45,6 @@ const LeaderboardList: React.FC = () => {
       }
     };
     fetchLeaderboard();
-  }, []);
-
-  useEffect(() => {
-    const fetchWinAmounts = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch("/wordle/amounts", {
-          method: "GET",
-          headers: {
-            "ngrok-skip-browser-warning": "69420",
-          },
-        });
-
-        const data: WinAmountsResponse = await response.json();
-        setWinAmounts(data.win_amounts);
-      } catch (error) {
-        console.error("Error fetching win amounts:", error);
-        alert("Failed to load win amounts. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchWinAmounts();
   }, []);
 
   if (isLoading) {
@@ -119,7 +91,7 @@ const LeaderboardList: React.FC = () => {
                 }`}
               >
                 {entry.guesses} {entry.guesses === 1 ? "guess" : "guesses"} (+
-                {winAmounts[entry.guesses - 1]} coins)
+                {entry.coins_earned} coins)
               </span>
             </li>
           ))}

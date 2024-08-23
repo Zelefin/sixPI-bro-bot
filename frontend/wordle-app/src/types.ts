@@ -21,6 +21,7 @@ export interface CloudData {
 export interface LeaderboardEntry {
   full_name: string;
   guesses: number;
+  coins_earned: number;
 }
 
 export interface LeaderboardResponse {
