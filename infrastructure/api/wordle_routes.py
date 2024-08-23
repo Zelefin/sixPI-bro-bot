@@ -181,6 +181,7 @@ async def guess(request: Request):
     config = request.app["config"]
     redis: Redis = request.app["redis"]
     session_pool = request.app["session_pool"]
+    task_manager = request.app["task_manager"]
 
     telegram_data = parse_init_data(data.get("_auth"))
     user = json.loads(telegram_data.get("user"))
@@ -235,38 +236,42 @@ async def guess(request: Request):
         full_name = f"{first_name} {last_name}" if last_name else first_name
         await update_leaderboard(redis, full_name, adjusted_user_attempts, win_amount)
 
-        # try:
-        #     first_name = user.get("first_name")
-        #     last_name = user.get("last_name")
-        #     full_name = f"{first_name} {last_name}" if last_name else first_name
-        #     name_with_mention = f'<a href="tg://user?id={user_id}">{full_name}</a>'
+        try:
+            first_name = user.get("first_name")
+            last_name = user.get("last_name")
+            full_name = f"{first_name} {last_name}" if last_name else first_name
+            name_with_mention = f'<a href="tg://user?id={user_id}">{full_name}</a>'
 
-        #     success_message = f"Користувач {name_with_mention} розгадав щоденне вордлі з {adjusted_user_attempts} спроби і отримав {win_amount} рейтингу, тепер у нього {new_balance} рейтингу.\nВітаємо!🥳"
+            success_message = f"Користувач {name_with_mention} розгадав щоденне вордлі з {adjusted_user_attempts} спроби і отримав {win_amount} рейтингу, тепер у нього {new_balance} рейтингу.\nВітаємо!🥳"
 
-        #     if (await bot.get_my_name()).name == "Just Curious":
-        #         chat_id = config.chat.debug
-        #         url = "https://t.me/emmm_my_bot/wordle"
-        #     else:
-        #         chat_id = config.chat.prod
-        #         url = "https://t.me/SixPiBro_bot/wordle"
+            if (await bot.get_my_name()).name == "Just Curious":
+                chat_id = config.chat.debug
+                url = "https://t.me/emmm_my_bot/wordle"
+            else:
+                chat_id = config.chat.prod
+                url = "https://t.me/SixPiBro_bot/wordle"
 
-        #     await bot.send_message(
-        #         chat_id=chat_id,
-        #         text=success_message,
-        #         parse_mode="HTML",
-        #         reply_markup=InlineKeyboardMarkup(
-        #             inline_keyboard=[
-        #                 [
-        #                     InlineKeyboardButton(
-        #                         text="💡 Зіграти теж",
-        #                         url=url,
-        #                     )
-        #                 ]
-        #             ]
-        #         ),
-        #     )
-        # except Exception as e:
-        #     logging.error(f"Error sending message: {e}")
+            await task_manager.run_task(
+                task_manager.send_and_delete_message,
+                bot=bot,
+                chat_id=chat_id,
+                text=success_message
+                + f"\n<i>(повідомлення самознищиться через 20 секунд)</i>",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="💡 Зіграти теж",
+                                url=url,
+                            )
+                        ]
+                    ]
+                ),
+                delete_delay=20.0,
+            )
+        except Exception as e:
+            logging.error(f"Error sending message: {e}")
 
     await add_user_attempt(redis, user_id)
 

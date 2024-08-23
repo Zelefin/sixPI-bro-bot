@@ -63,6 +63,7 @@ async def spin(request: Request):
     session_pool = request.app["session_pool"]
     bot = request.app["bot"]
     config = request.app["config"]
+    task_manager = request.app["task_manager"]
 
     try:
         stake = abs(int(data["stake"])) if data.get("stake") else 1
@@ -103,21 +104,43 @@ async def spin(request: Request):
                     chat_id = config.chat.prod
                     url = "https://t.me/SixPiBro_bot/casino"
 
-                await bot.send_message(
-                    chat_id=chat_id,
-                    text=success_message,
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(
-                        inline_keyboard=[
-                            [
-                                InlineKeyboardButton(
-                                    text="🎰 Зіграти теж!",
-                                    url=url,
-                                )
+                if "🎰" in result or "7️⃣" in result:
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text="🤩 " + success_message + " 🎉",
+                        parse_mode="HTML",
+                        reply_markup=InlineKeyboardMarkup(
+                            inline_keyboard=[
+                                [
+                                    InlineKeyboardButton(
+                                        text="🎰 Зіграти теж!",
+                                        url=url,
+                                    )
+                                ]
                             ]
-                        ]
-                    ),
-                )
+                        ),
+                    )
+                else:
+                    await task_manager.run_task(
+                        task_manager.send_and_delete_message,
+                        bot=bot,
+                        chat_id=chat_id,
+                        text=success_message
+                        + f"\n<i>(повідомлення самознищиться через 20 секунд)</i>",
+                        parse_mode="HTML",
+                        reply_markup=InlineKeyboardMarkup(
+                            inline_keyboard=[
+                                [
+                                    InlineKeyboardButton(
+                                        text="🎰 Зіграти теж!",
+                                        url=url,
+                                    )
+                                ]
+                            ]
+                        ),
+                        delete_delay=20.0,
+                    )
+
             except Exception as e:
                 logging.error(f"Error sending message: {e}")
 
