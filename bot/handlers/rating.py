@@ -11,7 +11,6 @@ from cachetools import TTLCache
 from bot.filters.admin import AdminFilter
 from infrastructure.database.repo.requests import RequestsRepo
 from bot.filters.rating import RatingFilter
-from bot.handlers.web_apps import HOURS
 from bot.middlewares.ratings_cache import RatingCacheReactionMiddleware
 from bot.services.rating import (
     NEGATIVE_EMOJIS,
@@ -66,7 +65,7 @@ async def process_new_rating(
 
 # @flags.override(user_id=845597372)
 @rating_router.message(Command("top"))
-@flags.rate_limit(limit=0.5 * HOURS, key="top", chat=True)
+@flags.rate_limit(limit=0.5 * 60 * 60, key="top", chat=True)
 async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
     history_key = StorageKey(bot_id=bot.id, user_id=m.chat.id, chat_id=m.chat.id)
     state_data = await state.storage.get_data(key=history_key)
@@ -111,34 +110,36 @@ async def get_top(m: types.Message, repo: RequestsRepo, bot, state: FSMContext):
                 for number, (rating, change, profile) in enumerate(league, 1)
             ]
         )
-        return f"<b>{league_name}:</b>\n{formatted_entries}"
+        return f"<blockquote expandable><b>{league_name}:</b>\n{formatted_entries}</blockquote>"
 
-    text = "\n\n".join(
-        [
-            format_league(kings, "Королі", "👑"),
-            format_league(sorcerers, "Чаклуни", "🧙‍♂️"),
-            format_league(hetmans, "Гетьмани", "🦄"),
-            format_league(otamans, "Отамани", "🐘"),
-            format_league(cossacs, "Козаки", "🐥"),
-            format_league(pig_herder, "Свинопаси", "👩‍🌾"),
-        ]
+    leagues = [
+        (kings, "Королі", "👑"),
+        (sorcerers, "Чаклуни", "🧙‍♂️"),
+        (hetmans, "Гетьмани", "🦄"),
+        (otamans, "Отамани", "🐘"),
+        (cossacs, "Козаки", "🐥"),
+        (pig_herder, "Свинопаси", "👩‍🌾"),
+    ]
+
+    text = "\n".join(
+        filter(bool, [format_league(*league_info) for league_info in leagues])
     )
 
-    text += """
-<b>Права юзерів:</b>
-- <b>👑Королі</b> можуть встановлювати титул собі і всім нижче чаклунів.
-- <b>🧙‍♂️Чаклуни</b> просто крутіші за гетьманів.
-- <b>🦄Гетьмани</b> можуть змінювати/встановлювати собі та всім хто нижче Отаманів кастомні титули.
-- <b>🐘Отамани</b> можуть встановлювати кастомні титули тільки собі.
-- <b>🐥Козаки</b> є доступ до моделей gpt-4o та claude-3.5-haiku.
-- <b>👩‍🌾Свинопаси</b> не можуть користуватися командою /ai.
+    #     text += """
+    # <b>Права юзерів:</b>
+    # - <b>👑Королі</b> можуть встановлювати титул собі і всім нижче чаклунів.
+    # - <b>🧙‍♂️Чаклуни</b> просто крутіші за гетьманів.
+    # - <b>🦄Гетьмани</b> можуть змінювати/встановлювати собі та всім хто нижче Отаманів кастомні титули.
+    # - <b>🐘Отамани</b> можуть встановлювати кастомні титули тільки собі.
+    # - <b>🐥Козаки</b> є доступ до моделей gpt-4o та claude-3.5-haiku.
+    # - <b>👩‍🌾Свинопаси</b> не можуть користуватися командою /ai.
 
-<b>Правила:</b>
-- Ставте реакції на повідомлення, деякі позитивні реакції збільшують рейтинг на 10, деякі негативні зменшують на 5.
-- Ви не можете змінювати рейтинг собі
+    # <b>Правила:</b>
+    # - Ставте реакції на повідомлення, деякі позитивні реакції збільшують рейтинг на 10, деякі негативні зменшують на 5.
+    # - Ви не можете змінювати рейтинг собі
 
-<b>Виграти рейтинг можна в /casino та в щоденному /wordle</b>
-"""
+    # <b>Виграти рейтинг можна в /casino та в щоденному /wordle</b>
+    # """
     await m.answer(text, disable_notification=True)
 
 
@@ -184,10 +185,13 @@ async def add_reaction_rating_handler(
     )
     if upgraded:
         new_rating, title = upgraded
-        await bot.send_message(
-            reaction.chat.id,
-            f"🎉 Вітаємо {helper.user.mention_html(helper.user.first_name)}! Досягнутий рівень: {title}! 🎉",
-        )
+        try:
+            await bot.send_message(
+                helper.user.id,
+                f"🎉 Досягнено новий рівень: {title}! Вітаю! 🎉",
+            )
+        except TelegramBadRequest:
+            logging.error(f"Failed to send notification to {helper.user.id}.")
 
 
 @rating_router.message(Command("setrating"), AdminFilter())
