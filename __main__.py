@@ -22,6 +22,7 @@ from pyrogram import Client
 from redis.asyncio.client import Redis
 from redis.asyncio.connection import ConnectionPool
 
+from infrastructure.api.background_tasks import BackgroundTaskManager
 from infrastructure.api.casino_routes import setup_casino_routes
 from infrastructure.api.common_routes import setup_common_routes
 from infrastructure.api.crypto_exchange_api.main import setup_crypto_exchange_routes
@@ -144,6 +145,7 @@ def main():
         config.redis.make_connection_string(),
         key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
     )
+    task_manager = BackgroundTaskManager()
 
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
     engine = create_engine(
@@ -216,6 +218,7 @@ def main():
         casino_app["bot"] = bot
         casino_app["config"] = config
         casino_app["session_pool"] = session_pool
+        casino_app["task_manager"] = task_manager
         setup_casino_routes(casino_app)
         app.add_subapp("/casino", casino_app)
 
@@ -224,6 +227,7 @@ def main():
         wordle_app["config"] = config
         wordle_app["redis"] = redis
         wordle_app["session_pool"] = session_pool
+        wordle_app["task_manager"] = task_manager
         setup_wordle_routes(wordle_app)
         app.add_subapp("/wordle", wordle_app)
 
@@ -233,21 +237,6 @@ def main():
         crypto_exchange_app["session_pool"] = session_pool
         setup_crypto_exchange_routes(crypto_exchange_app)
         app.add_subapp("/crypto-exchange", crypto_exchange_app)
-
-        # connect_four_app = web.Application()
-        # connect_four_app["bot"] = bot
-        # connect_four_app["config"] = config
-        # connect_four_app["redis"] = redis
-        # connect_four_app["session_pool"] = session_pool
-        # setup_connect_four_routes(connect_four_app)
-        # app.add_subapp("/connect-four", connect_four_app)
-
-        # poker_app = web.Application()
-        # poker_app["bot"] = bot
-        # poker_app["config"] = config
-        # poker_app["session_pool"] = session_pool
-        # setup_poker_routes(poker_app)
-        # app.add_subapp("/poker", poker_app)
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
         setup_application(app, dp, bot=bot)
