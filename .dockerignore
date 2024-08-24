@@ -246,3 +246,6 @@ frontend/*
 
 !frontend/wordle-app/dist
 !frontend/wordle-app/dist/**
+
+!frontend/crypto-exchange-app/dist
+!frontend/crypto-exchange-app/dist/**
