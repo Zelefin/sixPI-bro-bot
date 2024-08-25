@@ -73,7 +73,7 @@ async def poker_command(message: Message, bot: Bot):
                         url=(
                             "https://t.me/emmm_my_bot/crypto_exchange"
                             if (await bot.get_my_name()).name == "Just Curious"
-                            else "https://t.me/SixPiBro_bot/crypto_exchange"
+                            else "https://t.me/SixPiBro_bot/market"
                         ),
                     )
                 ]
