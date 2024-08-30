@@ -138,6 +138,7 @@ async def spin(request: Request):
                                 ]
                             ]
                         ),
+                        send_delay=1.0,
                         delete_delay=20.0,
                     )
 

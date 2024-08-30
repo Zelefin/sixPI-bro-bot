@@ -20,9 +20,11 @@ class BackgroundTaskManager:
         text: str,
         parse_mode: str = None,
         reply_markup: InlineKeyboardMarkup = None,
+        send_delay: float = 0.0,
         delete_delay: float = 5.0,
     ):
         try:
+            await asyncio.sleep(send_delay)
             sent_message = await bot.send_message(
                 chat_id=chat_id,
                 text=text,
