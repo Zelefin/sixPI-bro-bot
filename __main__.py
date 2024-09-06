@@ -26,7 +26,8 @@ from infrastructure.api.background_tasks import BackgroundTaskManager
 from infrastructure.api.casino_routes import setup_casino_routes
 from infrastructure.api.common_routes import setup_common_routes
 from infrastructure.api.crypto_exchange_api.main import setup_crypto_exchange_routes
-from infrastructure.api.math_solver_routes import setup_math_solver_routes
+from infrastructure.api.english_routes import setup_english_routes
+from infrastructure.api.math_routes import setup_math_solver_routes
 from infrastructure.api.wordle_routes import setup_wordle_routes
 
 # from infrastructure.api.connect_four.connect_four_routes import (
@@ -244,7 +245,14 @@ def main():
         math_solver_app["redis"] = redis
         math_solver_app["session_pool"] = session_pool
         setup_math_solver_routes(math_solver_app)
-        app.add_subapp("/math-solver", math_solver_app)
+        app.add_subapp("/math", math_solver_app)
+
+        english_app = web.Application()
+        english_app["config"] = config
+        english_app["redis"] = redis
+        english_app["session_pool"] = session_pool
+        setup_english_routes(english_app)
+        app.add_subapp("/english", english_app)
 
         webhook_request_handler.register(app, path=config.bot.webhook_path)
         setup_application(app, dp, bot=bot)

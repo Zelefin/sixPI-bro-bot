@@ -1,7 +1,10 @@
 import asyncio
+import logging
 from typing import Callable, Any
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup
+from bot.services.ai_service.ai_math_solver import AIMathSolver
+from infrastructure.database.repo.requests import RequestsRepo
 
 
 class BackgroundTaskManager:
@@ -37,3 +40,25 @@ class BackgroundTaskManager:
             )
         except Exception as e:
             print(f"Error in send_and_delete_message: {e}")
+
+    async def solve_math_problem(self, problem_id: int, session_pool, provider: str):
+        async with session_pool() as session:
+            repo = RequestsRepo(session)
+            problem = await repo.math_problem.get_problem(problem_id)
+
+            if not problem:
+                logging.error(f"Problem with id {problem_id} not found")
+                return
+
+            math_solver = AIMathSolver(provider)
+            try:
+                solution = await math_solver.solve_problem(
+                    text=problem.text,
+                    photo_path=problem.photo_path,
+                    additional_info=problem.additional_info,
+                )
+                await repo.math_problem.update_problem_solution(problem_id, solution)
+                # You might want to send a notification to the user here
+            except Exception as e:
+                logging.error(f"Failed to solve problem with id {problem_id}: {str(e)}")
+                # Handle the error, maybe update the problem status in the database

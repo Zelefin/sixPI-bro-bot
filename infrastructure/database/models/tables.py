@@ -1,5 +1,15 @@
 import datetime
-from sqlalchemy import BIGINT, TIMESTAMP, Float, Integer, String, TypeDecorator, func
+from sqlalchemy import (
+    BIGINT,
+    TIMESTAMP,
+    CheckConstraint,
+    Float,
+    Integer,
+    String,
+    Text,
+    TypeDecorator,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 from pytz import timezone
 
@@ -60,3 +70,28 @@ class CryptoTransaction(Base, TableNameMixin):
 
     def __repr__(self):
         return f"<CryptoTransaction id={self.id} user_id={self.user_id} coin_symbol={self.coin_symbol} amount={self.amount}>"
+
+
+class MathProblem(Base, TableNameMixin):
+    __table_args__ = (
+        CheckConstraint(
+            "problem_text IS NOT NULL OR photo_path IS NOT NULL",
+            name="check_problem_text_or_photo_path",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BIGINT, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=True)
+    photo_path: Mapped[str] = mapped_column(String(255), nullable=True)
+    additional_info: Mapped[str] = mapped_column(Text, nullable=True)
+    solution: Mapped[str] = mapped_column(
+        Text, nullable=True, default="", server_default=""
+    )
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        TZTimeStamp, server_default=func.now()
+    )
+
+    def __repr__(self):
+        problem_type = "text" if self.problem_text else "photo"
+        return f"<MathProblem id={self.id} user_id={self.user_id} problem_type={problem_type}>"

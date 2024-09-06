@@ -10,9 +10,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from infrastructure.database.models import Base
 from infrastructure.database.models.tables import (
     CryptoTransaction,
+    MathProblem,
     MessageUser,
     RatingUsers,
 )
+
+
+class UkraineTimezoneMixin:
+    def __init__(self):
+        self.ukraine_tz = timezone("Europe/Kiev")
+
+    def _get_current_ukraine_time(self):
+        """Helper method to get the current time in Ukraine, respecting DST"""
+        return datetime.datetime.now(self.ukraine_tz)
 
 
 class RatingUsersRepo:
@@ -89,14 +99,10 @@ class MessageUserRepo:
         return result.scalar_one_or_none()
 
 
-class CryptoTransactionsRepo:
+class CryptoTransactionsRepo(UkraineTimezoneMixin):
     def __init__(self, session: AsyncSession):
+        super().__init__()
         self.session = session
-        self.ukraine_tz = timezone("Europe/Kiev")
-
-    def _get_current_ukraine_time(self):
-        """Helper method to get the current time in Ukraine, respecting DST"""
-        return datetime.datetime.now(self.ukraine_tz)
 
     async def add_user_transaction(
         self,
@@ -215,6 +221,59 @@ class CryptoTransactionsRepo:
         return result.scalars().all()
 
 
+class MathProblemRepo(UkraineTimezoneMixin):
+    def __init__(self, session: AsyncSession):
+        super().__init__()
+        self.session = session
+
+    async def add_math_problem(
+        self,
+        user_id: int,
+        text: str | None,
+        photo_path: str | None,
+        additional_info: str | None,
+    ) -> int:
+        current_time = self._get_current_ukraine_time()
+
+        stmt = (
+            insert(MathProblem)
+            .values(
+                user_id=user_id,
+                text=text,
+                photo_path=photo_path,
+                additional_info=additional_info,
+                created_at=current_time,
+            )
+            .returning(MathProblem.id)
+        )
+        problem = await self.session.execute(stmt)
+        await self.session.commit()
+        return problem.scalar()
+
+    async def update_problem_solution(self, problem_id: int, solution: str):
+        stmt = (
+            update(MathProblem)
+            .where(MathProblem.id == problem_id)
+            .values(solution=solution)
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def get_user_problems(self, user_id: int) -> List[MathProblem]:
+        stmt = select(MathProblem).where(MathProblem.user_id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def get_user_problem(
+        self, problem_id: int, user_id: int
+    ) -> MathProblem | None:
+        stmt = select(MathProblem).where(
+            MathProblem.id == problem_id, MathProblem.user_id == user_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+
 @dataclass
 class RequestsRepo:
     """
@@ -236,6 +295,10 @@ class RequestsRepo:
     @property
     def crypto_transactions(self) -> CryptoTransactionsRepo:
         return CryptoTransactionsRepo(self.session)
+
+    @property
+    def math_problem(self) -> MathProblemRepo:
+        return MathProblemRepo(self.session)
 
 
 class Database:
