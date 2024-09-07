@@ -75,8 +75,8 @@ class CryptoTransaction(Base, TableNameMixin):
 class MathProblem(Base, TableNameMixin):
     __table_args__ = (
         CheckConstraint(
-            "problem_text IS NOT NULL OR photo_path IS NOT NULL",
-            name="check_problem_text_or_photo_path",
+            "text IS NOT NULL OR photo_path IS NOT NULL",
+            name="check_text_or_photo_path",
         ),
     )
 
@@ -93,5 +93,5 @@ class MathProblem(Base, TableNameMixin):
     )
 
     def __repr__(self):
-        problem_type = "text" if self.problem_text else "photo"
+        problem_type = "text" if self.text else "photo"
         return f"<MathProblem id={self.id} user_id={self.user_id} problem_type={problem_type}>"
