@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHapticFeedback, useLaunchParams } from "@telegram-apps/sdk-react";
+import CoolDude from "../assets/CoolDude.json";
+import { Player } from "@lottiefiles/react-lottie-player";
+
+const CoolDudeAnimation: React.FC = () => {
+  return (
+    <div className="w-6 h-6">
+      <Player src={CoolDude} autoplay loop={true} />
+    </div>
+  );
+};
 
 export const CompletionMessage: React.FC<{
   correctCount: number;
@@ -108,15 +118,20 @@ export const CompletionMessage: React.FC<{
         <button
           onClick={getBonusRating}
           disabled={cooldownTime !== null && cooldownTime > 0}
-          className={`w-full mt-4 py-2 px-4 rounded-lg text-white font-bold ${
+          className={`w-full mt-4 py-2 px-4 rounded-lg text-white font-bold flex items-center justify-center ${
             cooldownTime !== null && cooldownTime > 0
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-tg-button-color"
           }`}
         >
-          {cooldownTime !== null && cooldownTime > 0
-            ? `${t("cooldown")}: ${formatTime(cooldownTime)}`
-            : t("getBonus")}
+          {cooldownTime !== null && cooldownTime > 0 ? null : (
+            <CoolDudeAnimation />
+          )}
+          <span className="ml-1">
+            {cooldownTime !== null && cooldownTime > 0
+              ? `${t("cooldown")}: ${formatTime(cooldownTime)}`
+              : t("getBonus")}
+          </span>
         </button>
       )}
     </div>
