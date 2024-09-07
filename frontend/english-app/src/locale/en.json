@@ -1,5 +1,20 @@
 {
     "translation": {
-        "welcome": "Welcome to the English App"
+        "selectUnit": "Select a unit to learn",
+        "pleaseSelectUnit": "Please select a unit to start learning.",
+        "wordsInUnit": "Words in this unit",
+        "start": "Start",
+        "translateWord": "Translate the word",
+        "typeEnglishTranslation": "Type the English translation",
+        "wordsLeft": "Words left",
+        "score": "Score",
+        "words": "Words",
+        "yourAnswer": "Your answer",
+        "greatJob": "Great job!",
+        "lastWord": "Last word!",
+        "getRating": "Get 5 rating points",
+        "cooldown": "Wait to get an award",
+        "gfys": "Go fuck yourself",
+        "loading": "Loading"
     }
 }

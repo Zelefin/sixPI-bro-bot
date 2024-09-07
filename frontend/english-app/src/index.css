@@ -4,6 +4,7 @@
 
 body {
   background: var(--tg-theme-bg-color, white);
+  font-family: "Source Sans Pro", sans-serif;
   padding: 0;
   margin: 0;
 }
