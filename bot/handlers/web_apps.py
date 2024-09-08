@@ -85,3 +85,30 @@ async def poker_command(message: Message, bot: Bot):
     await bot.delete_messages(
         chat_id=message.chat.id, message_ids=[bot_msg.message_id, message.message_id]
     )
+
+
+@web_apps_router.message(Command("english"))
+async def english_command(message: Message, bot: Bot):
+    bot_msg = await message.reply(
+        text="Тренажер англійської доступний тут:\n<i>(повідомлення самознищаться через 5 секунд)</i>",
+        disable_web_page_preview=False,
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="🦋 Зіграти",
+                        url=(
+                            "https://t.me/emmm_my_bot/english"
+                            if (await bot.get_my_name()).name == "Just Curious"
+                            else "https://t.me/SixPiBro_bot/english"
+                        ),
+                    )
+                ]
+            ]
+        ),
+    )
+    await asyncio.sleep(5)
+
+    await bot.delete_messages(
+        chat_id=message.chat.id, message_ids=[bot_msg.message_id, message.message_id]
+    )

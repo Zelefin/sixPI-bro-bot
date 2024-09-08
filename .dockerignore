@@ -249,3 +249,6 @@ frontend/*
 
 !frontend/crypto-exchange-app/dist
 !frontend/crypto-exchange-app/dist/**
+
+!frontend/english-app/dist
+!frontend/english-app/dist/**
