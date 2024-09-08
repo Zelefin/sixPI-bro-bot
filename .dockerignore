@@ -252,3 +252,6 @@ frontend/*
 
 !frontend/english-app/dist
 !frontend/english-app/dist/**
+
+!frontend/math-app/dist
+!frontend/math-app/dist/**
