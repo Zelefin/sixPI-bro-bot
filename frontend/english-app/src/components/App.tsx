@@ -13,12 +13,20 @@ import { Navigate, Route, Router, Routes } from "react-router-dom";
 import { AppRoot } from "@telegram-apps/telegram-ui";
 import { type FC, useEffect, useMemo } from "react";
 import { routes } from "../routes";
+import { useTranslation } from "react-i18next";
 
 export const App: FC = () => {
   const lp = useLaunchParams();
+  const {
+    i18n: { changeLanguage },
+  } = useTranslation();
   const miniApp = useMiniApp();
   const themeParams = useThemeParams();
   const viewport = useViewport();
+
+  useEffect(() => {
+    changeLanguage(lp.initData?.user?.languageCode === "en" ? "en" : "uk");
+  }, [lp.initData?.user?.languageCode]);
 
   useEffect(() => {
     miniApp.setHeaderColor(miniApp.bgColor);

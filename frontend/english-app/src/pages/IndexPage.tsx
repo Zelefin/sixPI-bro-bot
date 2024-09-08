@@ -139,9 +139,9 @@ export const IndexPage: React.FC = () => {
           </div>
         </>
       )}
-      <button className="" onClick={startLearning} disabled={!selectedUnit}>
+      {/* <button className="" onClick={startLearning} disabled={!selectedUnit}>
         {t("start")} dev
-      </button>
+      </button> */}
     </div>
   );
 };
