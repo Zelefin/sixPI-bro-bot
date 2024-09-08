@@ -2,12 +2,50 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHapticFeedback, useLaunchParams } from "@telegram-apps/sdk-react";
 import CoolDude from "../assets/CoolDude.json";
+import AcceptEmoji from "../assets/AcceptEmoji.json";
 import { Player } from "@lottiefiles/react-lottie-player";
 
 const CoolDudeAnimation: React.FC = () => {
   return (
     <div className="w-6 h-6">
-      <Player src={CoolDude} autoplay loop={true} />
+      <Player src={CoolDude} autoplay loop />
+    </div>
+  );
+};
+
+const AcceptEmojiAnimation: React.FC = () => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [isRemoved, setIsRemoved] = useState(false);
+
+  useEffect(() => {
+    if (!isVisible) {
+      const timer = setTimeout(() => {
+        setIsRemoved(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
+
+  if (isRemoved) return null;
+
+  return (
+    <div className="flex items-center justify-center animate-fade-in w-full mt-4 py-2 px-4">
+      <div
+        className={`w-8 h-8 transition-opacity duration-500 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <Player
+          src={AcceptEmoji}
+          autoplay
+          loop={false}
+          onEvent={(event) => {
+            if (event === "complete") {
+              setIsVisible(false);
+            }
+          }}
+        />
+      </div>
     </div>
   );
 };
@@ -21,6 +59,7 @@ export const CompletionMessage: React.FC<{
   const { initDataRaw } = useLaunchParams();
   const [cooldownTime, setCooldownTime] = useState<number | null>(null);
   const [bonusReceived, setBonusReceived] = useState(false);
+  const [isButtonFadingOut, setIsButtonFadingOut] = useState(false);
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -29,37 +68,36 @@ export const CompletionMessage: React.FC<{
   };
 
   const getBonusRating = async () => {
-    haptic.impactOccurred("heavy");
+    haptic.notificationOccurred("success");
+    setIsButtonFadingOut(true);
 
-    // if (correctCount < 5) {
-    //   alert(t("gfys"));
-    //   return;
-    // }
+    // Delay the API call and state update
+    setTimeout(async () => {
+      try {
+        const response = await fetch("/english/award-points", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            _auth: initDataRaw || "",
+          }),
+        });
 
-    try {
-      const response = await fetch("/english/award-points", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          _auth: initDataRaw || "",
-        }),
-      });
+        const data = await response.json();
 
-      const data = await response.json();
-
-      if (response.ok && data.ok) {
-        alert(`Success! New balance: ${data.newBalance}`);
-        setBonusReceived(true);
-      } else if (response.status === 429 && data.timeLeft) {
-        setCooldownTime(data.timeLeft);
-      } else {
-        throw new Error(data.err || "Failed to award points");
+        if (response.ok && data.ok) {
+          setBonusReceived(true);
+        } else if (response.status === 429 && data.timeLeft) {
+          setCooldownTime(data.timeLeft);
+        } else {
+          throw new Error(data.err || "Failed to award points");
+        }
+      } catch (error) {
+        alert("Error");
       }
-    } catch (error) {
-      alert("Error awarding points");
-    }
+      setIsButtonFadingOut(false);
+    }, 300); // Adjust this delay to match the fade-out duration
   };
 
   const checkCooldown = async () => {
@@ -114,15 +152,19 @@ export const CompletionMessage: React.FC<{
       <p className="text-lg text-tg-text-color">
         {t("score")}: {correctCount} / {totalCount}
       </p>
-      {!bonusReceived && (
+      {bonusReceived ? (
+        <AcceptEmojiAnimation />
+      ) : (
         <button
           onClick={getBonusRating}
-          disabled={cooldownTime !== null && cooldownTime > 0}
-          className={`w-full mt-4 py-2 px-4 rounded-lg text-white font-bold flex items-center justify-center ${
+          disabled={
+            (cooldownTime !== null && cooldownTime > 0) || isButtonFadingOut
+          }
+          className={`w-full mt-4 py-3 px-4 rounded-lg text-white font-bold flex items-center justify-center transition-opacity duration-300 ${
             cooldownTime !== null && cooldownTime > 0
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-tg-button-color"
-          }`}
+          } ${isButtonFadingOut ? "opacity-0" : "opacity-100"}`}
         >
           {cooldownTime !== null && cooldownTime > 0 ? null : (
             <CoolDudeAnimation />
