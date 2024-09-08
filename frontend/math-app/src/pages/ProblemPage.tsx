@@ -25,7 +25,7 @@ export const ProblemPage: React.FC = () => {
       mainButton.setText(t("edit"));
       mainButton.on("click", () => {
         haptic.impactOccurred("medium");
-        navigate(`/edit/${problem.problem.id}`);
+        navigate(`/edit/${problem.problem}`);
       });
     } else {
       mainButton.hide();
@@ -64,7 +64,7 @@ export const ProblemPage: React.FC = () => {
         <hr className="border-t border-tg-section-separator-color" />
       </div>
 
-      <MathProblemDisplay problem={problem.problem} />
+      <MathProblemDisplay problem={problem} />
     </div>
   );
 };

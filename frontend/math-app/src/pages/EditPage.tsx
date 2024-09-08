@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button, Input } from "@telegram-apps/telegram-ui";
+import { Button } from "@telegram-apps/telegram-ui";
 import { FaCheckSquare } from "react-icons/fa";
 import { useHapticFeedback } from "@telegram-apps/sdk-react";
 import { useTranslation } from "react-i18next";
@@ -33,7 +33,7 @@ export const EditPage: React.FC = () => {
   return (
     <div className="p-4 flex flex-col h-screen">
       <form onSubmit={handleSubmit} className="flex-grow flex flex-col">
-        <Input
+        {/* <Input
           className="mb-4"
           value={problem}
           onChange={(e) => setProblem(e.target.value)}
@@ -46,7 +46,7 @@ export const EditPage: React.FC = () => {
           onChange={(e) => setAdditionalInfo(e.target.value)}
           placeholder={t("enterAdditionalInfo")}
           label={t("additionalInfo")}
-        />
+        /> */}
         <Button type="submit" className="mt-auto">
           <div className="flex gap-1 items-center justify-center">
             <FaCheckSquare size={20} />

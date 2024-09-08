@@ -1,6 +1,6 @@
 import React from "react";
 import "katex/dist/katex.min.css";
-import { SolutionStep, MathProblem } from "./problemTypes";
+import { SolutionStep, ProblemData } from "./problemTypes";
 import { Latex } from "./Latex";
 
 const SolutionStepDisplay: React.FC<SolutionStep> = ({
@@ -17,15 +17,15 @@ const SolutionStepDisplay: React.FC<SolutionStep> = ({
   </div>
 );
 
-export const MathProblemDisplay: React.FC<{ problem: MathProblem }> = ({
+export const MathProblemDisplay: React.FC<{ problem: ProblemData }> = ({
   problem,
 }) => (
   <div className="p-4 text-tg-text-color">
-    <h3 className="text-lg font-semibold mb-2">{problem.title}</h3>
-    <p className="mb-2">{problem.problem}</p>
-    {problem.solution.map((step, index) => (
+    <h3 className="text-lg font-semibold mb-2">{problem.problem.title}</h3>
+    <p className="mb-2">{problem.problem.problem}</p>
+    {problem.problem.solution.map((step, index) => (
       <SolutionStepDisplay key={index} {...step} />
     ))}
-    <p className="mt-2 font-semibold">Висновок: {problem.conclusion}</p>
+    <p className="mt-2 font-semibold">Висновок: {problem.problem.conclusion}</p>
   </div>
 );
