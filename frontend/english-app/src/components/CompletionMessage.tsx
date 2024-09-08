@@ -68,6 +68,12 @@ export const CompletionMessage: React.FC<{
   };
 
   const getBonusRating = async () => {
+    if (correctCount < 5) {
+      haptic.notificationOccurred("error");
+      alert(t("needMoreCorrectAnswers"));
+      return;
+    }
+
     haptic.notificationOccurred("success");
     setIsButtonFadingOut(true);
 
@@ -94,7 +100,7 @@ export const CompletionMessage: React.FC<{
           throw new Error(data.err || "Failed to award points");
         }
       } catch (error) {
-        alert("Error");
+        alert(t("error"));
       }
       setIsButtonFadingOut(false);
     }, 300); // Adjust this delay to match the fade-out duration

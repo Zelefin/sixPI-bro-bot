@@ -14,7 +14,8 @@
         "lastWord": "Last word!",
         "getRating": "Get 5 rating points",
         "cooldown": "Wait to get an award",
-        "gfys": "Go fuck yourself",
-        "loading": "Loading"
+        "needMoreCorrectAnswers": "Not enough correct answers 🤷‍♂️",
+        "loading": "Loading",
+        "error": "Error"
     }
 }
