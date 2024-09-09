@@ -44,5 +44,5 @@ jobs:
           for app in "${apps[@]}"; do
             echo "Deploying $app"
             ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} "rm -rf ${{ secrets.DEPLOY_PATH }}/$app/*"
-            scp -r frontend/$app/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/$app/
+            scp -r frontend/$app/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:${{ secrets.DEPLOY_PATH }}/$app/dist
           done
