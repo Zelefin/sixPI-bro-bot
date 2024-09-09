@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: "18"
 
@@ -25,7 +25,7 @@ jobs:
           npm run build
 
       - name: Upload casino-app build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: casino-app-build
           path: frontend/casino-app/dist/
@@ -37,7 +37,7 @@ jobs:
           npm run build
 
       - name: Upload wordle-app build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: wordle-app-build
           path: frontend/wordle-app/dist/
@@ -49,7 +49,7 @@ jobs:
           npm run build
 
       - name: Upload crypto-exchange-app build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: crypto-exchange-app-build
           path: frontend/crypto-exchange-app/dist/
@@ -61,7 +61,7 @@ jobs:
           npm run build
 
       - name: Upload english-app build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: english-app-build
           path: frontend/english-app/dist/
@@ -73,7 +73,7 @@ jobs:
           npm run build
 
       - name: Upload math-app build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: math-app-build
           path: frontend/math-app/dist/
@@ -84,40 +84,40 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download casino-app build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: casino-app-build
           path: dist/casino-app/dist
 
       - name: Download wordle-app build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: wordle-app-build
           path: dist/wordle-app/dist
 
       - name: Download crypto-exchange-app build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: crypto-exchange-app-build
           path: dist/crypto-exchange-app/dist
 
       - name: Download english-app build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: english-app-build
           path: dist/english-app/dist
 
       - name: Download math-app build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: math-app-build
           path: dist/math-app/dist
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
