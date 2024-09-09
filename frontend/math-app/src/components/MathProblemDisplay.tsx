@@ -1,6 +1,6 @@
 import React from "react";
 import "katex/dist/katex.min.css";
-import { SolutionStep, ProblemData } from "./problemTypes";
+import { SolutionStep, ProblemData } from "../problemTypes";
 import { Latex } from "./Latex";
 
 const SolutionStepDisplay: React.FC<SolutionStep> = ({

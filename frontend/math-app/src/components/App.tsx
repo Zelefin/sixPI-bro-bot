@@ -12,7 +12,7 @@ import { useIntegration } from "@telegram-apps/react-router-integration";
 import { Navigate, Route, Router, Routes } from "react-router-dom";
 import { AppRoot } from "@telegram-apps/telegram-ui";
 import { type FC, useEffect, useMemo } from "react";
-import { routes } from "../navigation/routes";
+import { routes } from "../routes";
 
 export const App: FC = () => {
   const lp = useLaunchParams();

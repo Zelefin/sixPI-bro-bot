@@ -1,9 +1,9 @@
 import type { ComponentType } from "react";
 
-import { IndexPage } from "../pages/IndexPage";
-import { HistoryPage } from "../pages/HistoryPage";
-import { ProblemPage } from "../pages/ProblemPage";
-import { EditPage } from "../pages/EditPage";
+import { IndexPage } from "./pages/IndexPage";
+import { HistoryPage } from "./pages/HistoryPage";
+import { ProblemPage } from "./pages/ProblemPage";
+import { EditPage } from "./pages/EditPage";
 
 interface Route {
   path: string;

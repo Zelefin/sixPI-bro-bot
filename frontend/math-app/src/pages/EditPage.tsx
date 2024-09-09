@@ -4,7 +4,7 @@ import { Button } from "@telegram-apps/telegram-ui";
 import { FaCheckSquare } from "react-icons/fa";
 import { useHapticFeedback } from "@telegram-apps/sdk-react";
 import { useTranslation } from "react-i18next";
-import { mockedProblemData } from "../components/problemTypes";
+import { mockedProblemData } from "../problemTypes";
 
 export const EditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

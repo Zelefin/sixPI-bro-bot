@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 // import { useParams } from "react-router-dom";
 import { MathProblemDisplay } from "../components/MathProblemDisplay";
-import { mockedProblemData } from "../components/problemTypes";
+import { mockedProblemData } from "../problemTypes";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
